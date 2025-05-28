@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>Status Board</title>
   <style>
-    /* Your existing styles */
+    /* Your existing styles remain the same */
   </style>
 </head>
 <body>
@@ -14,7 +14,9 @@
   <div id="board"></div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxOWpQ3P3nIlsFLYYyMaOBII_5Qof3xp2utdaVWThPM85vsUsroE6MDN6kBmJSN8UYl/exec";
+    // REPLACE THIS WITH YOUR NEW DEPLOYMENT URL
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx19hSE33nEeL7qrxXCkX65IxcUg_3DEdjTltxYGy-U7k3J6P7Yz3u6Ao_8yUDTryyv/exec";
+    
     const people = [
       "Brendan Varga", "Doug Kennedy", "Gerrit Cramer", "Isaac Miller", "John Stebelton",
       "Joe Beattie", "Kayla Plancon", "Kyle Buchner", "Kyle Miller", "Melanie Sobas",
@@ -33,9 +35,29 @@
     const statusMessage = document.getElementById("statusMessage");
     const lastUpdated = document.getElementById("lastUpdated");
 
+    // Improved fetch with timeout
+    async function safeFetch(url, options = {}, timeout = 10000) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+      
+      try {
+        const response = await fetch(url, {
+          ...options,
+          signal: controller.signal,
+          mode: 'no-cors' // Important for CORS
+        });
+        clearTimeout(timeoutId);
+        return response;
+      } catch (error) {
+        clearTimeout(timeoutId);
+        throw error;
+      }
+    }
+
     function showMessage(text, type = "loading") {
       statusMessage.textContent = text;
       statusMessage.className = type;
+      console[type === "error" ? "error" : "log"](text);
     }
 
     function updateLastUpdated() {
@@ -64,9 +86,9 @@
       select.value = currentStatus || "I'm good";
       updateStatusColor(select);
 
-      select.addEventListener("change", () => {
+      select.addEventListener("change", async () => {
         updateStatusColor(select);
-        updateStatus(name, select.value);
+        await updateStatus(name, select.value);
       });
 
       container.appendChild(label);
@@ -85,9 +107,9 @@
     async function loadStatuses() {
       try {
         showMessage("Loading statuses...", "loading");
-        const response = await fetch(`${SCRIPT_URL}?t=${Date.now()}`);
+        const response = await safeFetch(`${SCRIPT_URL}?t=${Date.now()}`);
         
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        if (!response.ok) throw new Error(`Server returned ${response.status}`);
         
         const data = await response.json();
         if (data.error) throw new Error(data.message || "Server error");
@@ -109,13 +131,17 @@
     async function updateStatus(name, status) {
       try {
         showMessage(`Updating ${name}...`, "loading");
-        const response = await fetch(SCRIPT_URL, {
+        
+        const response = await safeFetch(SCRIPT_URL, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
           body: JSON.stringify({ name, status })
         });
         
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        if (!response.ok) throw new Error(`Server returned ${response.status}`);
         
         const result = await response.json();
         if (result.error) throw new Error(result.message || "Update failed");
@@ -123,9 +149,15 @@
         updateLastUpdated();
         showMessage(`Updated ${name} to "${status}"`, "success");
         setTimeout(() => showMessage("", ""), 2000);
+        
+        // Refresh the data after successful update
+        setTimeout(loadStatuses, 1000);
       } catch (error) {
         showMessage(`Update failed: ${error.message}`, "error");
-        loadStatuses(); // Refresh to revert changes
+        console.error("Update error details:", error);
+        
+        // Revert to server state
+        loadStatuses();
       }
     }
 
