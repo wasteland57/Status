@@ -1,34 +1,132 @@
-function doGet() {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  const data = sheet.getDataRange().getValues();
-  return ContentService.createTextOutput(JSON.stringify(data))
-    .setMimeType(ContentService.MimeType.JSON)
-    .setHeader("Access-Control-Allow-Origin", "*");
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Status Dashboard</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background: #f8f9fa;
+    }
+    h1 {
+      text-align: center;
+    }
+    .person {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px;
+      border: 1px solid #ccc;
+      margin: 5px 0;
+      border-radius: 6px;
+      transition: background 0.3s ease;
+    }
+    .red {
+      background-color: #f8d7da;
+    }
+    .green {
+      background-color: #d4edda;
+    }
+    .orange {
+      background-color: #fff3cd;
+    }
+    .blue {
+      background-color: #d1ecf1;
+    }
+    select {
+      padding: 5px;
+      font-size: 1em;
+    }
+  </style>
+</head>
+<body>
+  <h1>Status Board</h1>
+  <div id="statusList"></div>
 
-function doPost(e) {
-  try {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-    const body = JSON.parse(e.postData.contents);
-    const name = body.name;
-    const status = body.status;
-    const data = sheet.getDataRange().getValues();
+  <script>
+    const names = [
+      "Brendan", "Varga", "Doug Kennedy", "Gerrit Cramer", "Isaac Miller", "John Stebelton",
+      "Joe Beattie", "Kayla Plancon", "Kyle Buchner", "Kyle Miller", "Melanie Sobas",
+      "Paul Bater", "Renee Kehren", "Rob Mooney", "Scott Sieg", "Steve Rowland", "Will Houser"
+    ];
 
-    for (let i = 1; i < data.length; i++) {
-      if (data[i][0] === name) {
-        sheet.getRange(i + 1, 2).setValue(status);
-        return ContentService.createTextOutput("Updated")
-          .setMimeType(ContentService.MimeType.TEXT)
-          .setHeader("Access-Control-Allow-Origin", "*");
-      }
+    const statuses = [
+      "I need work", "I need help", "I'm good", "I can do more"
+    ];
+
+    const statusColors = {
+      "I need help": "red",
+      "I'm good": "green",
+      "I need work": "orange",
+      "I can do more": "blue"
+    };
+
+    const endpoint = "https://script.google.com/macros/s/AKfycbxhROanUDXMitYiOGB6aqI17wxTdgHaRtMWarAQXnv2P6tc_NjNOK5QY-JJ_w3xQ3xTkw/exec";
+
+    const statusList = document.getElementById("statusList");
+
+    function createPersonRow(name, currentStatus) {
+      const div = document.createElement("div");
+      div.className = "person " + (statusColors[currentStatus] || "");
+
+      const label = document.createElement("span");
+      label.textContent = name;
+
+      const select = document.createElement("select");
+      statuses.forEach(status => {
+        const option = document.createElement("option");
+        option.value = status;
+        option.textContent = status;
+        if (status === currentStatus) option.selected = true;
+        select.appendChild(option);
+      });
+
+      select.addEventListener("change", () => {
+        const newStatus = select.value;
+        div.className = "person " + (statusColors[newStatus] || "");
+
+        // Pause refresh interval
+        clearInterval(refreshInterval);
+
+        // Send to Google Sheets
+        fetch(endpoint, {
+          method: "POST",
+          mode: "cors",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ name: name, status: newStatus })
+        }).then(() => {
+          // Resume refresh after delay
+          setTimeout(() => {
+            fetchStatus();
+            refreshInterval = setInterval(fetchStatus, 10000);
+          }, 3000);
+        }).catch(err => console.error("POST error:", err));
+      });
+
+      div.appendChild(label);
+      div.appendChild(select);
+      statusList.appendChild(div);
     }
 
-    return ContentService.createTextOutput("Name not found")
-      .setMimeType(ContentService.MimeType.TEXT)
-      .setHeader("Access-Control-Allow-Origin", "*");
-  } catch (err) {
-    return ContentService.createTextOutput("Error: " + err.message)
-      .setMimeType(ContentService.MimeType.TEXT)
-      .setHeader("Access-Control-Allow-Origin", "*");
-  }
-}
+    function fetchStatus() {
+      fetch(endpoint)
+        .then(response => response.json())
+        .then(data => {
+          statusList.innerHTML = ""; // Clear existing list
+          names.forEach(name => {
+            const status = data[name] || "I need work";
+            createPersonRow(name, status);
+          });
+        })
+        .catch(err => console.error("GET error:", err));
+    }
+
+    fetchStatus();
+    let refreshInterval = setInterval(fetchStatus, 10000);
+  </script>
+</body>
+</html>
