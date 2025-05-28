@@ -202,7 +202,7 @@
 
     <script>
         // Configuration - Replace with your Google Apps Script Web App URL
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxRN6SQvrn8sDxia_EJu2a6elS6QoJ21ky3Qz6-ix17f5kTqPJJoslxrzPtggibklPe/exec';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz5chruFXxmYt0-adr0JPMfm7L93gNtIJlNqFMmSDc0We0lu-s3xvV5SOr_eUO2J3dH/exec';
         
         const teamMembers = [
             'Brendan Varga', 'Doug Kennedy', 'Gerrit Cramer', 'Isaac Miller',
@@ -268,24 +268,48 @@
         // Load current statuses from Google Sheet
         async function loadStatuses() {
             try {
-                const response = await fetch(`${SCRIPT_URL}?action=getStatuses`);
+                console.log('Loading statuses...');
+                const url = `${SCRIPT_URL}?action=getStatuses`;
+                console.log('Fetching from:', url);
+                
+                const response = await fetch(url);
+                console.log('Response status:', response.status);
+                console.log('Response ok:', response.ok);
+                
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 
-                const data = await response.json();
+                const responseText = await response.text();
+                console.log('Raw response:', responseText);
+                
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (parseError) {
+                    console.error('JSON parsing error:', parseError);
+                    console.error('Raw response text:', responseText);
+                    throw new Error('Invalid JSON response from server');
+                }
+                
+                console.log('Parsed response:', data);
                 
                 if (data.error) {
                     throw new Error(data.error);
                 }
                 
                 currentStatuses = data.statuses || {};
+                console.log('Current statuses:', currentStatuses);
                 updateDisplay();
                 updateLastUpdatedTime();
                 
+                // Clear any existing error messages
+                const existingErrors = document.querySelectorAll('.error');
+                existingErrors.forEach(error => error.remove());
+                
             } catch (error) {
                 console.error('Error loading statuses:', error);
-                showError('Failed to load team statuses. Please check your connection and try again.');
+                showError(`Failed to load team statuses: ${error.message}`);
             }
         }
         
