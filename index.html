@@ -165,6 +165,15 @@
             background-color: #e3f2fd;
             border-color: #2196F3;
         }
+        
+        .debug-info {
+            font-size: 12px;
+            color: #666;
+            margin-top: 20px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
@@ -200,9 +209,13 @@
         Last updated: Never
     </div>
 
+    <div class="debug-info" id="debugInfo">
+        Debug information will appear here
+    </div>
+
     <script>
         // Configuration - Replace with your Google Apps Script Web App URL
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz5chruFXxmYt0-adr0JPMfm7L93gNtIJlNqFMmSDc0We0lu-s3xvV5SOr_eUO2J3dH/exec';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwhTlEKlmtIrCnR-8PbhKE8Z9TEECtOY1hmUw68yAUbiLQ41H-DIDDy92rDgJTCCvfs/exec';
         
         const teamMembers = [
             'Brendan Varga', 'Doug Kennedy', 'Gerrit Cramer', 'Isaac Miller',
@@ -224,6 +237,7 @@
         
         // Initialize the application
         function init() {
+            logDebug('Initializing application...');
             createStatusCards();
             loadStatuses();
             // Update every 10 seconds
@@ -268,38 +282,40 @@
         // Load current statuses from Google Sheet
         async function loadStatuses() {
             try {
-                console.log('Loading statuses...');
-                const url = `${SCRIPT_URL}?action=getStatuses`;
-                console.log('Fetching from:', url);
+                logDebug('Loading statuses...');
+                const url = `${SCRIPT_URL}?action=getStatuses&cacheBuster=${Date.now()}`;
+                logDebug(`Fetching from: ${url}`);
                 
-                const response = await fetch(url);
-                console.log('Response status:', response.status);
-                console.log('Response ok:', response.ok);
+                const response = await fetch(url, {
+                    method: 'GET',
+                    mode: 'cors',
+                    cache: 'no-cache'
+                });
+                
+                logDebug(`Response status: ${response.status}`);
                 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 
-                const responseText = await response.text();
-                console.log('Raw response:', responseText);
-                
-                let data;
-                try {
-                    data = JSON.parse(responseText);
-                } catch (parseError) {
-                    console.error('JSON parsing error:', parseError);
-                    console.error('Raw response text:', responseText);
-                    throw new Error('Invalid JSON response from server');
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error('Response was not JSON');
                 }
                 
-                console.log('Parsed response:', data);
+                const data = await response.json();
+                logDebug('Parsed response:', data);
                 
                 if (data.error) {
                     throw new Error(data.error);
                 }
                 
-                currentStatuses = data.statuses || {};
-                console.log('Current statuses:', currentStatuses);
+                if (!data.statuses) {
+                    throw new Error('No statuses in response');
+                }
+                
+                currentStatuses = data.statuses;
+                logDebug('Current statuses:', currentStatuses);
                 updateDisplay();
                 updateLastUpdatedTime();
                 
@@ -340,38 +356,27 @@
         // Update status for a specific person
         async function updateStatus(name, status) {
             try {
-                console.log(`Updating status for ${name}: ${status}`);
+                logDebug(`Updating status for ${name}: ${status}`);
                 
-                // Use URL parameters approach (most reliable with Google Apps Script)
-                const url = `${SCRIPT_URL}?action=updateStatus&name=${encodeURIComponent(name)}&status=${encodeURIComponent(status)}`;
+                const url = `${SCRIPT_URL}?action=updateStatus&name=${encodeURIComponent(name)}&status=${encodeURIComponent(status)}&cacheBuster=${Date.now()}`;
                 
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
-                    }
+                    },
+                    mode: 'cors',
+                    cache: 'no-cache'
                 });
                 
-                console.log('Response status:', response.status);
-                console.log('Response ok:', response.ok);
+                logDebug(`Response status: ${response.status}`);
                 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 
-                const responseText = await response.text();
-                console.log('Raw response:', responseText);
-                
-                let data;
-                try {
-                    data = JSON.parse(responseText);
-                } catch (parseError) {
-                    console.error('Response parsing error:', parseError);
-                    console.error('Raw response:', responseText);
-                    throw new Error('Invalid response from server');
-                }
-                
-                console.log('Parsed response:', data);
+                const data = await response.json();
+                logDebug('Parsed response:', data);
                 
                 if (data.error) {
                     throw new Error(data.error);
@@ -383,7 +388,7 @@
                     const select = document.getElementById(`status-${name.replace(/\s+/g, '-')}`);
                     updateSelectStyle(select, status);
                     updateLastUpdatedTime();
-                    console.log('Status updated successfully!');
+                    logDebug('Status updated successfully!');
                 } else {
                     throw new Error('Unexpected response format');
                 }
@@ -414,6 +419,25 @@
         function updateLastUpdatedTime() {
             const lastUpdated = document.getElementById('lastUpdated');
             lastUpdated.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+        }
+        
+        // Log debug information
+        function logDebug(message, data) {
+            const debugDiv = document.getElementById('debugInfo');
+            const entry = document.createElement('div');
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            debugDiv.insertBefore(entry, debugDiv.firstChild);
+            
+            if (data) {
+                console.log(message, data);
+            } else {
+                console.log(message);
+            }
+            
+            // Limit to 10 debug entries
+            if (debugDiv.children.length > 10) {
+                debugDiv.removeChild(debugDiv.lastChild);
+            }
         }
         
         // Initialize when page loads
