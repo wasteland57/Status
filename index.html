@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Status Board</title>
   <style>
     body {
@@ -23,61 +23,40 @@
       background: white;
       border-radius: 6px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      transition: all 0.3s ease;
-    }
-    .person:hover {
-      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
     }
     .person label {
       flex: 1;
       font-weight: bold;
-      font-size: 16px;
     }
     .status {
       padding: 8px 12px;
       font-size: 14px;
       border-radius: 4px;
-      border: 1px solid #ccc;
-      cursor: pointer;
+      border: 1px solid #ddd;
       min-width: 150px;
-      transition: all 0.2s ease;
     }
-    .red    { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
-    .green  { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
-    .orange { background-color: #fff3cd; color: #856404; border-color: #ffeeba; }
-    .blue   { background-color: #cce5ff; color: #004085; border-color: #b8daff; }
-    .last-updated {
+    .red { background-color: #f8d7da; color: #721c24; }
+    .green { background-color: #d4edda; color: #155724; }
+    .orange { background-color: #fff3cd; color: #856404; }
+    .blue { background-color: #cce5ff; color: #004085; }
+    #statusMessage {
       text-align: center;
-      margin: 20px 0;
-      color: #666;
-      font-style: italic;
-    }
-    .notification {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 15px;
-      background: #4CAF50;
-      color: white;
+      padding: 10px;
+      margin: 10px 0;
       border-radius: 4px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      z-index: 1000;
     }
-    .error {
-      background: #f44336;
-    }
+    .error { background: #f8d7da; color: #721c24; }
+    .success { background: #d4edda; color: #155724; }
+    .loading { background: #fff3cd; color: #856404; }
   </style>
 </head>
 <body>
   <h1>Status Board</h1>
-  <div class="last-updated" id="lastUpdated">Loading...</div>
+  <div id="statusMessage" class="loading">Loading statuses...</div>
   <div id="board"></div>
-  <div class="notification" id="notification"></div>
 
   <script>
-    const scriptURL = "https://script.google.com/macros/s/AKfycbwUHOxoKbTs4bZVFzi5a38l4pa6DdxIojlhjMtQPI4KunGm6PzJiydzLyVoTKXufmEN/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxrQZSL9MXeAzmgmLHsA0WGKmE2iyEFVJtZfqkKwqb1hsUYU1U_D7HXKPn-HK0EJK-n/exec";
     const people = [
       "Brendan Varga", "Doug Kennedy", "Gerrit Cramer", "Isaac Miller", "John Stebelton",
       "Joe Beattie", "Kayla Plancon", "Kyle Buchner", "Kyle Miller", "Melanie Sobas",
@@ -85,30 +64,24 @@
       "Will Houser"
     ];
 
-    const options = [
-      { text: "I need work",   value: "I need work",   class: "orange" },
-      { text: "I need help",   value: "I need help",   class: "red" },
-      { text: "I'm good",      value: "I'm good",      class: "green" },
-      { text: "I can do more", value: "I can do more", class: "blue" },
+    const statusOptions = [
+      { text: "I need work", value: "I need work", class: "orange" },
+      { text: "I need help", value: "I need help", class: "red" },
+      { text: "I'm good", value: "I'm good", class: "green" },
+      { text: "I can do more", value: "I can do more", class: "blue" }
     ];
 
     const board = document.getElementById("board");
-    const lastUpdatedEl = document.getElementById("lastUpdated");
-    const notificationEl = document.getElementById("notification");
+    const statusMessage = document.getElementById("statusMessage");
 
-    function showNotification(message, isError = false) {
-      notificationEl.textContent = message;
-      notificationEl.className = isError ? "notification error" : "notification";
-      notificationEl.style.opacity = 1;
-      
-      setTimeout(() => {
-        notificationEl.style.opacity = 0;
-      }, 3000);
+    function showMessage(text, type = "loading") {
+      statusMessage.textContent = text;
+      statusMessage.className = type;
     }
 
-    function createDropdown(name, selected) {
-      const div = document.createElement("div");
-      div.className = "person";
+    function createStatusDropdown(name, currentStatus) {
+      const container = document.createElement("div");
+      container.className = "person";
 
       const label = document.createElement("label");
       label.textContent = name;
@@ -117,91 +90,98 @@
       select.className = "status";
       select.dataset.name = name;
 
-      options.forEach(opt => {
-        const option = document.createElement("option");
-        option.value = opt.value;
-        option.textContent = opt.text;
-        option.className = opt.class;
-        select.appendChild(option);
+      statusOptions.forEach(option => {
+        const optElement = document.createElement("option");
+        optElement.value = option.value;
+        optElement.textContent = option.text;
+        optElement.className = option.class;
+        select.appendChild(optElement);
       });
 
-      select.value = selected || "I'm good";
-      updateColor(select);
+      select.value = currentStatus || "I'm good";
+      updateStatusColor(select);
 
       select.addEventListener("change", () => {
-        updateColor(select);
-        sendUpdate(name, select.value);
+        updateStatusColor(select);
+        updateStatus(name, select.value);
       });
 
-      div.appendChild(label);
-      div.appendChild(select);
-      return div;
+      container.appendChild(label);
+      container.appendChild(select);
+      return container;
     }
 
-    function updateColor(select) {
-      select.classList.remove("red", "green", "orange", "blue");
-      const colorClass = options.find(o => o.value === select.value)?.class;
-      if (colorClass) {
-        select.classList.add(colorClass);
+    function updateStatusColor(selectElement) {
+      selectElement.classList.remove("red", "green", "orange", "blue");
+      const selectedOption = statusOptions.find(opt => opt.value === selectElement.value);
+      if (selectedOption) {
+        selectElement.classList.add(selectedOption.class);
       }
     }
 
-    function renderBoard(data = {}) {
-      board.innerHTML = "";
-      people.forEach(name => {
-        const status = data[name] || "I'm good";
-        board.appendChild(createDropdown(name, status));
-      });
-      lastUpdatedEl.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
-    }
-
-    async function fetchStatuses() {
+    async function loadStatuses() {
       try {
-        const res = await fetch(scriptURL);
-        if (!res.ok) throw new Error("Network response was not ok");
-        const data = await res.json();
+        showMessage("Loading statuses...", "loading");
+        const response = await fetch(SCRIPT_URL);
         
-        if (data.error) {
-          throw new Error(data.message || "Error fetching statuses");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-        renderBoard(data);
-      } catch (err) {
-        console.error("Failed to load statuses", err);
-        showNotification("Error loading statuses. Trying again...", true);
+        const data = await response.json();
+        
+        if (data.error) {
+          throw new Error(data.message || "Error from server");
+        }
+
+        board.innerHTML = "";
+        people.forEach(person => {
+          const status = data[person] || "I'm good";
+          board.appendChild(createStatusDropdown(person, status));
+        });
+        
+        showMessage("Statuses loaded successfully", "success");
+        setTimeout(() => showMessage("", ""), 2000);
+      } catch (error) {
+        console.error("Error loading statuses:", error);
+        showMessage(`Error: ${error.message}`, "error");
+        setTimeout(loadStatuses, 5000); // Retry after 5 seconds
       }
     }
 
-    async function sendUpdate(name, status) {
+    async function updateStatus(name, status) {
       try {
-        const response = await fetch(scriptURL, {
+        showMessage(`Updating ${name}'s status...`, "loading");
+        const response = await fetch(SCRIPT_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, status }),
+          body: JSON.stringify({ name, status })
         });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
         
         const result = await response.json();
         
         if (result.error) {
-          throw new Error(result.message || "Error updating status");
+          throw new Error(result.message || "Error from server");
         }
         
-        showNotification(`Updated ${name}'s status to "${status}"`);
-        lastUpdatedEl.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
-      } catch (err) {
-        console.error("Failed to update status", err);
-        showNotification("Failed to update status. Please try again.", true);
+        showMessage(`Updated ${name}'s status to "${status}"`, "success");
+        setTimeout(() => showMessage("", ""), 2000);
+      } catch (error) {
+        console.error("Error updating status:", error);
+        showMessage(`Update failed: ${error.message}`, "error");
+        setTimeout(() => loadStatuses(), 3000); // Refresh after error
       }
     }
 
     // Initial load
-    fetchStatuses();
+    loadStatuses();
     
-    // Auto-refresh every 10 seconds
-    setInterval(fetchStatuses, 10000);
-    
-    // Show loading notification
-    showNotification("Loading status board...");
+    // Auto-refresh every 15 seconds
+    setInterval(loadStatuses, 15000);
   </script>
 </body>
 </html>
