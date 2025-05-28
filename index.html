@@ -2,13 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Status Dashboard</title>
+  <title>Status Board</title>
   <style>
     body {
-      font-family: sans-serif;
+      font-family: Arial, sans-serif;
       padding: 20px;
-      background: #f8f9fa;
+      background: #f4f4f4;
     }
     h1 {
       text-align: center;
@@ -16,117 +15,122 @@
     .person {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      margin: 8px 0;
       padding: 10px;
-      border: 1px solid #ccc;
-      margin: 5px 0;
+      background: white;
       border-radius: 6px;
-      transition: background 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-    .red {
-      background-color: #f8d7da;
+    .person label {
+      flex: 1;
+      font-weight: bold;
     }
-    .green {
-      background-color: #d4edda;
+    .status {
+      padding: 6px;
+      font-size: 14px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
     }
-    .orange {
-      background-color: #fff3cd;
-    }
-    .blue {
-      background-color: #d1ecf1;
-    }
-    select {
-      padding: 5px;
-      font-size: 1em;
-    }
+    .red    { background-color: #f8d7da; color: #721c24; }
+    .green  { background-color: #d4edda; color: #155724; }
+    .orange { background-color: #fff3cd; color: #856404; }
+    .blue   { background-color: #cce5ff; color: #004085; }
   </style>
 </head>
 <body>
   <h1>Status Board</h1>
-  <div id="statusList"></div>
+  <div id="board"></div>
 
   <script>
-    const names = [
-      "Brendan", "Varga", "Doug Kennedy", "Gerrit Cramer", "Isaac Miller", "John Stebelton",
+    const scriptURL = "https://script.google.com/macros/s/AKfycbxhROanUDXMitYiOGB6aqI17wxTdgHaRtMWarAQXnv2P6tc_NjNOK5QY-JJ_w3xQ3xTkw/exec"; // Replace with your actual Apps Script URL
+    const people = [
+      "Brendan Varga", "Doug Kennedy", "Gerrit Cramer", "Isaac Miller", "John Stebelton",
       "Joe Beattie", "Kayla Plancon", "Kyle Buchner", "Kyle Miller", "Melanie Sobas",
-      "Paul Bater", "Renee Kehren", "Rob Mooney", "Scott Sieg", "Steve Rowland", "Will Houser"
+      "Paul Bater", "Renee Kehren", "Rob Mooney", "Scott Sieg", "Steve Rowland", 
+      "Will Houser"
     ];
 
-    const statuses = [
-      "I need work", "I need help", "I'm good", "I can do more"
+    const options = [
+      { text: "I need work",   value: "I need work",   class: "orange" },
+      { text: "I need help",   value: "I need help",   class: "red" },
+      { text: "I'm good",      value: "I'm good",      class: "green" },
+      { text: "I can do more", value: "I can do more", class: "blue" },
     ];
 
-    const statusColors = {
-      "I need help": "red",
-      "I'm good": "green",
-      "I need work": "orange",
-      "I can do more": "blue"
-    };
+    const board = document.getElementById("board");
 
-    const endpoint = "https://script.google.com/macros/s/AKfycbxhROanUDXMitYiOGB6aqI17wxTdgHaRtMWarAQXnv2P6tc_NjNOK5QY-JJ_w3xQ3xTkw/exec";
-
-    const statusList = document.getElementById("statusList");
-
-    function createPersonRow(name, currentStatus) {
+    function createDropdown(name, selected) {
       const div = document.createElement("div");
-      div.className = "person " + (statusColors[currentStatus] || "");
+      div.className = "person";
 
-      const label = document.createElement("span");
+      const label = document.createElement("label");
       label.textContent = name;
 
       const select = document.createElement("select");
-      statuses.forEach(status => {
+      select.className = "status";
+      select.dataset.name = name;
+
+      options.forEach(opt => {
         const option = document.createElement("option");
-        option.value = status;
-        option.textContent = status;
-        if (status === currentStatus) option.selected = true;
+        option.value = opt.value;
+        option.textContent = opt.text;
+        option.className = opt.class;
         select.appendChild(option);
       });
 
+      select.value = selected || "I'm good";
+      updateColor(select);
+
       select.addEventListener("change", () => {
-        const newStatus = select.value;
-        div.className = "person " + (statusColors[newStatus] || "");
-
-        // Pause refresh interval
-        clearInterval(refreshInterval);
-
-        // Send to Google Sheets
-        fetch(endpoint, {
-          method: "POST",
-          mode: "cors",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ name: name, status: newStatus })
-        }).then(() => {
-          // Resume refresh after delay
-          setTimeout(() => {
-            fetchStatus();
-            refreshInterval = setInterval(fetchStatus, 10000);
-          }, 3000);
-        }).catch(err => console.error("POST error:", err));
+        updateColor(select);
+        sendUpdate(name, select.value);
       });
 
       div.appendChild(label);
       div.appendChild(select);
-      statusList.appendChild(div);
+      return div;
     }
 
-    function fetchStatus() {
-      fetch(endpoint)
-        .then(response => response.json())
-        .then(data => {
-          statusList.innerHTML = ""; // Clear existing list
-          names.forEach(name => {
-            const status = data[name] || "I need work";
-            createPersonRow(name, status);
-          });
-        })
-        .catch(err => console.error("GET error:", err));
+    function updateColor(select) {
+      select.classList.remove("red", "green", "orange", "blue");
+      const colorClass = options.find(o => o.value === select.value)?.class;
+      if (colorClass) {
+        select.classList.add(colorClass);
+      }
     }
 
-    fetchStatus();
-    let refreshInterval = setInterval(fetchStatus, 10000);
+    function renderBoard(data = {}) {
+      board.innerHTML = "";
+      people.forEach(name => {
+        const status = data[name] || "I'm good";
+        board.appendChild(createDropdown(name, status));
+      });
+    }
+
+    async function fetchStatuses() {
+      try {
+        const res = await fetch(scriptURL);
+        const data = await res.json();
+        renderBoard(data);
+      } catch (err) {
+        console.error("Failed to load statuses", err);
+      }
+    }
+
+    async function sendUpdate(name, status) {
+      try {
+        await fetch(scriptURL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, status }),
+        });
+      } catch (err) {
+        console.error("Failed to update status", err);
+      }
+    }
+
+    fetchStatuses();
+    setInterval(fetchStatuses, 10000); // auto-refresh every 10 seconds
   </script>
 </body>
 </html>
