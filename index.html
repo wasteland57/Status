@@ -215,7 +215,7 @@
 
     <script>
         // Configuration - Replace with your Google Apps Script Web App URL
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwhTlEKlmtIrCnR-8PbhKE8Z9TEECtOY1hmUw68yAUbiLQ41H-DIDDy92rDgJTCCvfs/exec';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxeeVGZ18sJh0OVFuhUQYTlMqmKCJca-IL62gP7glXDY9MCnPuLhuj2HyjiT17xtD8N/exec';
         
         const teamMembers = [
             'Brendan Varga', 'Doug Kennedy', 'Gerrit Cramer', 'Isaac Miller',
@@ -280,54 +280,24 @@
         }
         
         // Load current statuses from Google Sheet
-        async function loadStatuses() {
-            try {
-                logDebug('Loading statuses...');
-                const url = `${SCRIPT_URL}?action=getStatuses&cacheBuster=${Date.now()}`;
-                logDebug(`Fetching from: ${url}`);
-                
-                const response = await fetch(url, {
-                    method: 'GET',
-                    mode: 'cors',
-                    cache: 'no-cache'
-                });
-                
-                logDebug(`Response status: ${response.status}`);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    throw new Error('Response was not JSON');
-                }
-                
-                const data = await response.json();
-                logDebug('Parsed response:', data);
-                
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-                
-                if (!data.statuses) {
-                    throw new Error('No statuses in response');
-                }
-                
-                currentStatuses = data.statuses;
-                logDebug('Current statuses:', currentStatuses);
-                updateDisplay();
-                updateLastUpdatedTime();
-                
-                // Clear any existing error messages
-                const existingErrors = document.querySelectorAll('.error');
-                existingErrors.forEach(error => error.remove());
-                
-            } catch (error) {
-                console.error('Error loading statuses:', error);
-                showError(`Failed to load team statuses: ${error.message}`);
-            }
-        }
+async function loadStatuses() {
+  try {
+    const url = `${SCRIPT_URL}?action=getStatuses&cacheBuster=${Date.now()}`;
+    const response = await fetch(url, {
+      method: 'GET',
+      mode: 'cors',
+      cache: 'no-cache'
+    });
+    
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    
+    const data = await response.json();
+    // Rest of your code...
+  } catch (error) {
+    console.error('Error:', error);
+    showError(`Failed to load: ${error.message}`);
+  }
+}
         
         // Update display with current statuses
         function updateDisplay() {
