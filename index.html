@@ -202,7 +202,7 @@
 
     <script>
         // Configuration - Replace with your Google Apps Script Web App URL
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx1tpXHR1i3Rw5fSEpta-6OsTDyq-2doU62BBzs1L2jOiLcGxwtcIdj-BatOpeRvryV/exec';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz1lt2xXyEi6Wv1rKiQMC3r949P1VjIobIBjsoP7svPTv6Ormyndh6V-ml6GvDR0CgK/exec';
         
         const teamMembers = [
             'Brendan Varga', 'Doug Kennedy', 'Gerrit Cramer', 'Isaac Miller',
@@ -316,23 +316,31 @@
         // Update status for a specific person
         async function updateStatus(name, status) {
             try {
+                // Use FormData approach which works better with Google Apps Script
+                const formData = new FormData();
+                formData.append('action', 'updateStatus');
+                formData.append('name', name);
+                formData.append('status', status);
+                
                 const response = await fetch(SCRIPT_URL, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        action: 'updateStatus',
-                        name: name,
-                        status: status
-                    })
+                    body: formData
                 });
                 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 
-                const data = await response.json();
+                const responseText = await response.text();
+                let data;
+                
+                try {
+                    data = JSON.parse(responseText);
+                } catch (parseError) {
+                    console.error('Response parsing error:', parseError);
+                    console.error('Raw response:', responseText);
+                    throw new Error('Invalid response from server');
+                }
                 
                 if (data.error) {
                     throw new Error(data.error);
