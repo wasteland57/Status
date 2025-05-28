@@ -8,41 +8,76 @@
       font-family: Arial, sans-serif;
       padding: 20px;
       background: #f4f4f4;
+      max-width: 800px;
+      margin: 0 auto;
     }
     h1 {
       text-align: center;
+      color: #333;
     }
     .person {
       display: flex;
       align-items: center;
       margin: 8px 0;
-      padding: 10px;
+      padding: 15px;
       background: white;
       border-radius: 6px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+    }
+    .person:hover {
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
     }
     .person label {
       flex: 1;
       font-weight: bold;
+      font-size: 16px;
     }
     .status {
-      padding: 6px;
+      padding: 8px 12px;
       font-size: 14px;
       border-radius: 4px;
       border: 1px solid #ccc;
+      cursor: pointer;
+      min-width: 150px;
+      transition: all 0.2s ease;
     }
-    .red    { background-color: #f8d7da; color: #721c24; }
-    .green  { background-color: #d4edda; color: #155724; }
-    .orange { background-color: #fff3cd; color: #856404; }
-    .blue   { background-color: #cce5ff; color: #004085; }
+    .red    { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+    .green  { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
+    .orange { background-color: #fff3cd; color: #856404; border-color: #ffeeba; }
+    .blue   { background-color: #cce5ff; color: #004085; border-color: #b8daff; }
+    .last-updated {
+      text-align: center;
+      margin: 20px 0;
+      color: #666;
+      font-style: italic;
+    }
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 15px;
+      background: #4CAF50;
+      color: white;
+      border-radius: 4px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 1000;
+    }
+    .error {
+      background: #f44336;
+    }
   </style>
 </head>
 <body>
   <h1>Status Board</h1>
+  <div class="last-updated" id="lastUpdated">Loading...</div>
   <div id="board"></div>
+  <div class="notification" id="notification"></div>
 
   <script>
-    const scriptURL = "https://script.google.com/macros/s/AKfycbyGCjJwNcSPZLhzTdgoIMhe6-L-p23b9-gdBFYyLOEysuhrpxQKZCKsf98Y2cfmH74s/exec"; // Replace with your actual Apps Script URL
+    const scriptURL = "https://script.google.com/macros/s/AKfycbwUHOxoKbTs4bZVFzi5a38l4pa6DdxIojlhjMtQPI4KunGm6PzJiydzLyVoTKXufmEN/exec";
     const people = [
       "Brendan Varga", "Doug Kennedy", "Gerrit Cramer", "Isaac Miller", "John Stebelton",
       "Joe Beattie", "Kayla Plancon", "Kyle Buchner", "Kyle Miller", "Melanie Sobas",
@@ -58,6 +93,18 @@
     ];
 
     const board = document.getElementById("board");
+    const lastUpdatedEl = document.getElementById("lastUpdated");
+    const notificationEl = document.getElementById("notification");
+
+    function showNotification(message, isError = false) {
+      notificationEl.textContent = message;
+      notificationEl.className = isError ? "notification error" : "notification";
+      notificationEl.style.opacity = 1;
+      
+      setTimeout(() => {
+        notificationEl.style.opacity = 0;
+      }, 3000);
+    }
 
     function createDropdown(name, selected) {
       const div = document.createElement("div");
@@ -105,32 +152,56 @@
         const status = data[name] || "I'm good";
         board.appendChild(createDropdown(name, status));
       });
+      lastUpdatedEl.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
     }
 
     async function fetchStatuses() {
       try {
         const res = await fetch(scriptURL);
+        if (!res.ok) throw new Error("Network response was not ok");
         const data = await res.json();
+        
+        if (data.error) {
+          throw new Error(data.message || "Error fetching statuses");
+        }
+        
         renderBoard(data);
       } catch (err) {
         console.error("Failed to load statuses", err);
+        showNotification("Error loading statuses. Trying again...", true);
       }
     }
 
     async function sendUpdate(name, status) {
       try {
-        await fetch(scriptURL, {
+        const response = await fetch(scriptURL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name, status }),
         });
+        
+        const result = await response.json();
+        
+        if (result.error) {
+          throw new Error(result.message || "Error updating status");
+        }
+        
+        showNotification(`Updated ${name}'s status to "${status}"`);
+        lastUpdatedEl.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
       } catch (err) {
         console.error("Failed to update status", err);
+        showNotification("Failed to update status. Please try again.", true);
       }
     }
 
+    // Initial load
     fetchStatuses();
-    setInterval(fetchStatuses, 10000); // auto-refresh every 10 seconds
+    
+    // Auto-refresh every 10 seconds
+    setInterval(fetchStatuses, 10000);
+    
+    // Show loading notification
+    showNotification("Loading status board...");
   </script>
 </body>
 </html>
