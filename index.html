@@ -1,171 +1,386 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Status Board</title>
-  <style>
-    /* Your existing styles remain the same */
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Status Tracker</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            color: #333;
+            margin: 0;
+        }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .person-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+        }
+        
+        .person-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .person-name {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .status-dropdown {
+            width: 100%;
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .status-dropdown:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        
+        /* Status color coding */
+        .status-need-help {
+            background-color: #ffebee;
+            border-color: #f44336;
+            color: #c62828;
+        }
+        
+        .status-good {
+            background-color: #e8f5e8;
+            border-color: #4CAF50;
+            color: #2e7d32;
+        }
+        
+        .status-need-work {
+            background-color: #fff3e0;
+            border-color: #ff9800;
+            color: #e65100;
+        }
+        
+        .status-can-do-more {
+            background-color: #e3f2fd;
+            border-color: #2196F3;
+            color: #1565c0;
+        }
+        
+        .last-updated {
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            margin-top: 20px;
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+        }
+        
+        .error {
+            background-color: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            margin: 10px 0;
+        }
+        
+        .legend {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 20px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            border: 2px solid;
+        }
+        
+        .legend-red {
+            background-color: #ffebee;
+            border-color: #f44336;
+        }
+        
+        .legend-green {
+            background-color: #e8f5e8;
+            border-color: #4CAF50;
+        }
+        
+        .legend-orange {
+            background-color: #fff3e0;
+            border-color: #ff9800;
+        }
+        
+        .legend-blue {
+            background-color: #e3f2fd;
+            border-color: #2196F3;
+        }
+    </style>
 </head>
 <body>
-  <h1>Status Board</h1>
-  <div id="lastUpdated"></div>
-  <div id="statusMessage" class="loading">Loading statuses...</div>
-  <div id="board"></div>
-
-  <script>
-    // REPLACE THIS WITH YOUR NEW DEPLOYMENT URL
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx19hSE33nEeL7qrxXCkX65IxcUg_3DEdjTltxYGy-U7k3J6P7Yz3u6Ao_8yUDTryyv/exec";
+    <div class="header">
+        <h1>Team Status Tracker</h1>
+        <p>Select your current status to keep the team updated</p>
+    </div>
     
-    const people = [
-      "Brendan Varga", "Doug Kennedy", "Gerrit Cramer", "Isaac Miller", "John Stebelton",
-      "Joe Beattie", "Kayla Plancon", "Kyle Buchner", "Kyle Miller", "Melanie Sobas",
-      "Paul Bater", "Renee Kehren", "Rob Mooney", "Scott Sieg", "Steve Rowland", 
-      "Will Houser"
-    ];
-
-    const statusOptions = [
-      { text: "I need work", value: "I need work", class: "orange" },
-      { text: "I need help", value: "I need help", class: "red" },
-      { text: "I'm good", value: "I'm good", class: "green" },
-      { text: "I can do more", value: "I can do more", class: "blue" }
-    ];
-
-    const board = document.getElementById("board");
-    const statusMessage = document.getElementById("statusMessage");
-    const lastUpdated = document.getElementById("lastUpdated");
-
-    // Improved fetch with timeout
-    async function safeFetch(url, options = {}, timeout = 10000) {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeout);
-      
-      try {
-        const response = await fetch(url, {
-          ...options,
-          signal: controller.signal,
-          mode: 'no-cors' // Important for CORS
-        });
-        clearTimeout(timeoutId);
-        return response;
-      } catch (error) {
-        clearTimeout(timeoutId);
-        throw error;
-      }
-    }
-
-    function showMessage(text, type = "loading") {
-      statusMessage.textContent = text;
-      statusMessage.className = type;
-      console[type === "error" ? "error" : "log"](text);
-    }
-
-    function updateLastUpdated() {
-      lastUpdated.textContent = `Last updated: ${new Date().toLocaleString()}`;
-    }
-
-    function createStatusDropdown(name, currentStatus) {
-      const container = document.createElement("div");
-      container.className = "person";
-
-      const label = document.createElement("label");
-      label.textContent = name;
-
-      const select = document.createElement("select");
-      select.className = "status";
-      select.dataset.name = name;
-
-      statusOptions.forEach(option => {
-        const optElement = document.createElement("option");
-        optElement.value = option.value;
-        optElement.textContent = option.text;
-        if (option.class) optElement.classList.add(option.class);
-        select.appendChild(optElement);
-      });
-
-      select.value = currentStatus || "I'm good";
-      updateStatusColor(select);
-
-      select.addEventListener("change", async () => {
-        updateStatusColor(select);
-        await updateStatus(name, select.value);
-      });
-
-      container.appendChild(label);
-      container.appendChild(select);
-      return container;
-    }
-
-    function updateStatusColor(selectElement) {
-      statusOptions.forEach(opt => {
-        selectElement.classList.remove(opt.class);
-      });
-      const selectedOption = statusOptions.find(opt => opt.value === selectElement.value);
-      if (selectedOption?.class) selectElement.classList.add(selectedOption.class);
-    }
-
-    async function loadStatuses() {
-      try {
-        showMessage("Loading statuses...", "loading");
-        const response = await safeFetch(`${SCRIPT_URL}?t=${Date.now()}`);
-        
-        if (!response.ok) throw new Error(`Server returned ${response.status}`);
-        
-        const data = await response.json();
-        if (data.error) throw new Error(data.message || "Server error");
-        
-        board.innerHTML = "";
-        people.forEach(person => {
-          board.appendChild(createStatusDropdown(person, data[person] || "I'm good"));
-        });
-        
-        updateLastUpdated();
-        showMessage("Statuses loaded", "success");
-        setTimeout(() => showMessage("", ""), 2000);
-      } catch (error) {
-        showMessage(`Error: ${error.message}`, "error");
-        setTimeout(loadStatuses, 5000);
-      }
-    }
-
-    async function updateStatus(name, status) {
-      try {
-        showMessage(`Updating ${name}...`, "loading");
-        
-        const response = await safeFetch(SCRIPT_URL, {
-          method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-          },
-          body: JSON.stringify({ name, status })
-        });
-        
-        if (!response.ok) throw new Error(`Server returned ${response.status}`);
-        
-        const result = await response.json();
-        if (result.error) throw new Error(result.message || "Update failed");
-        
-        updateLastUpdated();
-        showMessage(`Updated ${name} to "${status}"`, "success");
-        setTimeout(() => showMessage("", ""), 2000);
-        
-        // Refresh the data after successful update
-        setTimeout(loadStatuses, 1000);
-      } catch (error) {
-        showMessage(`Update failed: ${error.message}`, "error");
-        console.error("Update error details:", error);
-        
-        // Revert to server state
-        loadStatuses();
-      }
-    }
-
-    // Initial load
-    loadStatuses();
+    <div class="legend">
+        <div class="legend-item">
+            <div class="legend-color legend-red"></div>
+            <span>I need help</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color legend-green"></div>
+            <span>I'm good</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color legend-orange"></div>
+            <span>I need work</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color legend-blue"></div>
+            <span>I can do more</span>
+        </div>
+    </div>
     
-    // Auto-refresh every 20 seconds
-    setInterval(loadStatuses, 20000);
-  </script>
+    <div id="statusContainer" class="loading">
+        Loading team status...
+    </div>
+    
+    <div class="last-updated" id="lastUpdated">
+        Last updated: Never
+    </div>
+
+    <script>
+        // Configuration - Replace with your Google Apps Script Web App URL
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx1tpXHR1i3Rw5fSEpta-6OsTDyq-2doU62BBzs1L2jOiLcGxwtcIdj-BatOpeRvryV/exec';
+        
+        const teamMembers = [
+            'Brendan Varga', 'Doug Kennedy', 'Gerrit Cramer', 'Isaac Miller',
+            'John Stebelton', 'Joe Beattie', 'Kayla Plancon', 'Kyle Buchner',
+            'Kyle Miller', 'Melanie Sobas', 'Paul Bater', 'Renee Kehren',
+            'Rob Mooney', 'Scott Sieg', 'Steve Will Houser'
+        ];
+        
+        const statusOptions = [
+            { value: '', text: 'Select status...', class: '' },
+            { value: 'I need help', text: 'I need help', class: 'status-need-help' },
+            { value: "I'm good", text: "I'm good", class: 'status-good' },
+            { value: 'I need work', text: 'I need work', class: 'status-need-work' },
+            { value: 'I can do more', text: 'I can do more', class: 'status-can-do-more' }
+        ];
+        
+        let currentStatuses = {};
+        let updateInterval;
+        
+        // Initialize the application
+        function init() {
+            createStatusCards();
+            loadStatuses();
+            // Update every 10 seconds
+            updateInterval = setInterval(loadStatuses, 10000);
+        }
+        
+        // Create status cards for each team member
+        function createStatusCards() {
+            const container = document.getElementById('statusContainer');
+            container.innerHTML = '';
+            container.className = 'status-grid';
+            
+            teamMembers.forEach(name => {
+                const card = document.createElement('div');
+                card.className = 'person-card';
+                
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'person-name';
+                nameDiv.textContent = name;
+                
+                const select = document.createElement('select');
+                select.className = 'status-dropdown';
+                select.id = `status-${name.replace(/\s+/g, '-')}`;
+                
+                statusOptions.forEach(option => {
+                    const optionElement = document.createElement('option');
+                    optionElement.value = option.value;
+                    optionElement.textContent = option.text;
+                    select.appendChild(optionElement);
+                });
+                
+                select.addEventListener('change', (e) => {
+                    updateStatus(name, e.target.value);
+                });
+                
+                card.appendChild(nameDiv);
+                card.appendChild(select);
+                container.appendChild(card);
+            });
+        }
+        
+        // Load current statuses from Google Sheet
+        async function loadStatuses() {
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=getStatuses`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                currentStatuses = data.statuses || {};
+                updateDisplay();
+                updateLastUpdatedTime();
+                
+            } catch (error) {
+                console.error('Error loading statuses:', error);
+                showError('Failed to load team statuses. Please check your connection and try again.');
+            }
+        }
+        
+        // Update display with current statuses
+        function updateDisplay() {
+            teamMembers.forEach(name => {
+                const select = document.getElementById(`status-${name.replace(/\s+/g, '-')}`);
+                if (select) {
+                    const status = currentStatuses[name] || '';
+                    select.value = status;
+                    updateSelectStyle(select, status);
+                }
+            });
+        }
+        
+        // Update select element styling based on status
+        function updateSelectStyle(select, status) {
+            // Remove all status classes
+            select.classList.remove('status-need-help', 'status-good', 'status-need-work', 'status-can-do-more');
+            
+            // Add appropriate class based on status
+            const statusOption = statusOptions.find(opt => opt.value === status);
+            if (statusOption && statusOption.class) {
+                select.classList.add(statusOption.class);
+            }
+        }
+        
+        // Update status for a specific person
+        async function updateStatus(name, status) {
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'updateStatus',
+                        name: name,
+                        status: status
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                // Update local status and display
+                currentStatuses[name] = status;
+                const select = document.getElementById(`status-${name.replace(/\s+/g, '-')}`);
+                updateSelectStyle(select, status);
+                updateLastUpdatedTime();
+                
+            } catch (error) {
+                console.error('Error updating status:', error);
+                showError('Failed to update status. Please try again.');
+                // Revert the select to previous value
+                loadStatuses();
+            }
+        }
+        
+        // Show error message
+        function showError(message) {
+            const container = document.getElementById('statusContainer');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.textContent = message;
+            container.parentNode.insertBefore(errorDiv, container);
+            
+            // Remove error after 5 seconds
+            setTimeout(() => {
+                errorDiv.remove();
+            }, 5000);
+        }
+        
+        // Update last updated time
+        function updateLastUpdatedTime() {
+            const lastUpdated = document.getElementById('lastUpdated');
+            lastUpdated.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+        }
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', init);
+        
+        // Clean up interval when page unloads
+        window.addEventListener('beforeunload', () => {
+            if (updateInterval) {
+                clearInterval(updateInterval);
+            }
+        });
+    </script>
 </body>
 </html>
