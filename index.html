@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Status Dashboard</title>
+  <style>
+    body {
+      font-family: Arial;
+      padding: 20px;
+    }
+    .status-row {
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+    }
+    .status-row select {
+      margin-left: 10px;
+      padding: 5px;
+    }
+    .red    { background-color: #f8d7da; color: #721c24; }
+    .green  { background-color: #d4edda; color: #155724; }
+    .orange { background-color: #fff3cd; color: #856404; }
+    .blue   { background-color: #d1ecf1; color: #0c5460; }
+  </style>
+</head>
+<body>
+  <h2>Status Dashboard</h2>
+  <div id="statusBoard">Loading...</div>
+
+  <script>
+    const endpoint = 'https://script.google.com/macros/s/AKfycbwlTdK8rrQ9EBAI9cvymf0a20XVqL0FNl6fwvB0xfwFR2qQtCEiEXrq6wfHdkEFIuhhUg/exec'; // Replace with your Web App URL
+
+    const statusColors = {
+      "I need help": "red",
+      "I'm good": "green",
+      "I need work": "orange",
+      "I can do more": "blue"
+    };
+
+    function fetchStatus() {
+      fetch(endpoint)
+        .then(res => res.json())
+        .then(data => {
+          const board = document.getElementById("statusBoard");
+          board.innerHTML = "";
+          data.slice(1).forEach(row => {
+            const [name, status] = row;
+
+            const div = document.createElement("div");
+            div.className = `status-row ${statusColors[status] || ""}`;
+
+            const label = document.createElement("span");
+            label.textContent = name;
+
+            const select = document.createElement("select");
+            Object.keys(statusColors).forEach(opt => {
+              const option = document.createElement("option");
+              option.value = opt;
+              option.textContent = opt;
+              if (opt === status) option.selected = true;
+              select.appendChild(option);
+            });
+
+            select.addEventListener("change", () => {
+              const newStatus = select.value;
+              fetch(endpoint, {
+                method: "POST",
+                body: JSON.stringify({ name: name, status: newStatus }),
+                headers: { "Content-Type": "application/json" }
+              }).then(() => {
+                fetchStatus(); // Reload the data
+              });
+            });
+
+            div.appendChild(label);
+            div.appendChild(select);
+            board.appendChild(div);
+          });
+        });
+    }
+
+    fetchStatus();
+    setInterval(fetchStatus, 10000); // refresh every 10 seconds
+  </script>
+</body>
+</html>
