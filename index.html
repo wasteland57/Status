@@ -257,6 +257,13 @@
     </div>
 
     <script>
+        // Google Apps Script configuration - MUST BE AT THE TOP
+        // REPLACE THIS URL with your actual Google Apps Script web app URL
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyKqAmsoMpW_6PVKbXmk45ngmCo72gw8QSidUpSlnueSEoKlddaJXCbTiaRFWkz3g60/exec';
+        
+        // Set to true when you have the Google Apps Script URL
+        const USE_GOOGLE_SHEETS = true; // Change to true when ready
+
         // Team members data
         const teamMembers = [
             'Brendan Varga', 'Doug Kennedy', 'Gerrit Cramer', 'Isaac Miller',
@@ -415,13 +422,7 @@
         // Start the application
         init();
 
-        // Google Apps Script integration
-        // REPLACE THIS URL with your actual Google Apps Script web app URL
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyKqAmsoMpW_6PVKbXmk45ngmCo72gw8QSidUpSlnueSEoKlddaJXCbTiaRFWkz3g60/exec';
-        
-        // Set to true when you have the Google Apps Script URL
-        const USE_GOOGLE_SHEETS = true; // Change to true when ready
-        
+        // Google Apps Script integration functions
         // Real sync function for Google Sheets
         async function syncToGoogleSheets(name, status) {
             if (!USE_GOOGLE_SHEETS) {
@@ -444,7 +445,7 @@
                 });
                 
                 if (!response.ok) {
-                    throw new Error('Sync failed');
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 
                 const result = await response.json();
@@ -452,6 +453,7 @@
                     throw new Error(result.error || 'Sync failed');
                 }
                 
+                console.log('Sync successful:', result);
                 return result;
             } catch (error) {
                 console.error('Error syncing to Google Sheets:', error);
@@ -469,7 +471,7 @@
                 const response = await fetch(GOOGLE_SCRIPT_URL + '?action=getData');
                 
                 if (!response.ok) {
-                    throw new Error('Failed to fetch data');
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 
                 const result = await response.json();
@@ -477,6 +479,7 @@
                     teamData = result.data;
                     renderTeamMembers();
                     updateConnectionStatus(true);
+                    console.log('Data fetched successfully');
                 } else {
                     throw new Error(result.error || 'Failed to fetch data');
                 }
