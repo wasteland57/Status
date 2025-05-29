@@ -5,420 +5,503 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Team Status Tracker</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 800px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
         }
-        
+
         .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
             text-align: center;
-            margin-bottom: 30px;
-            padding: 20px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        
+
         .header h1 {
-            color: #333;
-            margin: 0;
-        }
-        
-        .status-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .person-card {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            transition: transform 0.2s ease;
-        }
-        
-        .person-card:hover {
-            transform: translateY(-2px);
-        }
-        
-        .person-name {
-            font-weight: bold;
-            font-size: 16px;
+            font-size: 2.5em;
             margin-bottom: 10px;
-            color: #333;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
-        
-        .status-dropdown {
-            width: 100%;
-            padding: 8px 12px;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            cursor: pointer;
+
+        .sync-status {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            padding: 8px 16px;
+            display: inline-block;
+            margin-top: 10px;
+            font-size: 0.9em;
         }
-        
-        .status-dropdown:focus {
-            outline: none;
-            border-color: #4CAF50;
+
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 30px;
         }
-        
-        /* Status color coding */
-        .status-need-help {
-            background-color: #ffebee;
-            border-color: #f44336;
-            color: #c62828;
-        }
-        
-        .status-good {
-            background-color: #e8f5e8;
-            border-color: #4CAF50;
-            color: #2e7d32;
-        }
-        
-        .status-need-work {
-            background-color: #fff3e0;
-            border-color: #ff9800;
-            color: #e65100;
-        }
-        
-        .status-can-do-more {
-            background-color: #e3f2fd;
-            border-color: #2196F3;
-            color: #1565c0;
-        }
-        
-        .last-updated {
-            text-align: center;
-            color: #666;
-            font-size: 12px;
-            margin-top: 20px;
+
+        .member-card {
             background: white;
-            padding: 10px;
-            border-radius: 6px;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border-left: 5px solid #e0e0e0;
         }
-        
-        .loading {
-            text-align: center;
-            color: #666;
+
+        .member-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+
+        .member-card.need-help {
+            border-left-color: #e74c3c;
+            background: linear-gradient(135deg, #fff 0%, #ffebee 100%);
+        }
+
+        .member-card.good {
+            border-left-color: #27ae60;
+            background: linear-gradient(135deg, #fff 0%, #e8f5e8 100%);
+        }
+
+        .member-card.need-work {
+            border-left-color: #f39c12;
+            background: linear-gradient(135deg, #fff 0%, #fff3e0 100%);
+        }
+
+        .member-card.can-do-more {
+            border-left-color: #3498db;
+            background: linear-gradient(135deg, #fff 0%, #e3f2fd 100%);
+        }
+
+        .member-name {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+
+        .status-selector {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .status-selector:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.2);
+        }
+
+        .status-selector.need-help {
+            border-color: #e74c3c;
+            color: #e74c3c;
+            font-weight: 600;
+        }
+
+        .status-selector.good {
+            border-color: #27ae60;
+            color: #27ae60;
+            font-weight: 600;
+        }
+
+        .status-selector.need-work {
+            border-color: #f39c12;
+            color: #f39c12;
+            font-weight: 600;
+        }
+
+        .status-selector.can-do-more {
+            border-color: #3498db;
+            color: #3498db;
+            font-weight: 600;
+        }
+
+        .last-updated {
+            font-size: 0.8em;
+            color: #7f8c8d;
+            margin-top: 10px;
             font-style: italic;
         }
-        
-        .error {
-            background-color: #ffebee;
-            color: #c62828;
-            padding: 10px;
-            border-radius: 6px;
-            text-align: center;
-            margin: 10px 0;
-        }
-        
+
         .legend {
             display: flex;
             justify-content: center;
             flex-wrap: wrap;
-            gap: 15px;
-            margin: 20px 0;
-            padding: 15px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            gap: 20px;
+            padding: 20px;
+            background: #f8f9fa;
         }
-        
+
         .legend-item {
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 14px;
-            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
-        
+
         .legend-color {
-            width: 16px;
-            height: 16px;
-            border-radius: 3px;
-            border: 2px solid;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
         }
-        
-        .legend-red {
-            background-color: #ffebee;
-            border-color: #f44336;
+
+        .legend-color.need-help { background-color: #e74c3c; }
+        .legend-color.good { background-color: #27ae60; }
+        .legend-color.need-work { background-color: #f39c12; }
+        .legend-color.can-do-more { background-color: #3498db; }
+
+        .connection-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            color: white;
+            font-size: 0.9em;
+            z-index: 1000;
         }
-        
-        .legend-green {
-            background-color: #e8f5e8;
-            border-color: #4CAF50;
+
+        .connection-indicator.connected {
+            background: #27ae60;
         }
-        
-        .legend-orange {
-            background-color: #fff3e0;
-            border-color: #ff9800;
+
+        .connection-indicator.disconnected {
+            background: #e74c3c;
         }
-        
-        .legend-blue {
-            background-color: #e3f2fd;
-            border-color: #2196F3;
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
         }
-        
-        .debug-info {
-            font-size: 12px;
-            color: #666;
-            margin-top: 20px;
-            padding: 10px;
-            background: #f0f0f0;
-            border-radius: 5px;
+
+        .updating {
+            animation: pulse 1s infinite;
+        }
+
+        @media (max-width: 768px) {
+            .team-grid {
+                grid-template-columns: 1fr;
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .legend {
+                flex-direction: column;
+                align-items: center;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Team Status Tracker</h1>
-        <p>Select your current status to keep the team updated</p>
-    </div>
+    <div class="connection-indicator" id="connectionIndicator">● Simulated Mode</div>
     
-    <div class="legend">
-        <div class="legend-item">
-            <div class="legend-color legend-red"></div>
-            <span>I need help</span>
+    <div class="container">
+        <div class="header">
+            <h1>Team Status Tracker</h1>
+            <div class="sync-status">
+                <span id="syncStatus">Ready to sync with Google Sheets</span>
+            </div>
         </div>
-        <div class="legend-item">
-            <div class="legend-color legend-green"></div>
-            <span>I'm good</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-color legend-orange"></div>
-            <span>I need work</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-color legend-blue"></div>
-            <span>I can do more</span>
-        </div>
-    </div>
-    
-    <div id="statusContainer" class="loading">
-        Loading team status...
-    </div>
-    
-    <div class="last-updated" id="lastUpdated">
-        Last updated: Never
-    </div>
 
-    <div class="debug-info" id="debugInfo">
-        Debug information will appear here
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color need-help"></div>
+                <span>I need help</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color good"></div>
+                <span>I'm good</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color need-work"></div>
+                <span>I need work</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color can-do-more"></div>
+                <span>I can do more</span>
+            </div>
+        </div>
+
+        <div class="team-grid" id="teamGrid">
+            <!-- Team members will be populated here -->
+        </div>
     </div>
 
     <script>
-        // Configuration - Replace with your Google Apps Script Web App URL
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxeeVGZ18sJh0OVFuhUQYTlMqmKCJca-IL62gP7glXDY9MCnPuLhuj2HyjiT17xtD8N/exec';
-        
+        // Team members data
         const teamMembers = [
             'Brendan Varga', 'Doug Kennedy', 'Gerrit Cramer', 'Isaac Miller',
             'John Stebelton', 'Joe Beattie', 'Kayla Plancon', 'Kyle Buchner',
             'Kyle Miller', 'Melanie Sobas', 'Paul Bater', 'Renee Kehren',
             'Rob Mooney', 'Scott Sieg', 'Steve Will Houser'
         ];
-        
+
+        // Status options
         const statusOptions = [
-            { value: '', text: 'Select status...', class: '' },
-            { value: 'I need help', text: 'I need help', class: 'status-need-help' },
-            { value: "I'm good", text: "I'm good", class: 'status-good' },
-            { value: 'I need work', text: 'I need work', class: 'status-need-work' },
-            { value: 'I can do more', text: 'I can do more', class: 'status-can-do-more' }
+            { value: 'good', label: "I'm good", class: 'good' },
+            { value: 'need-help', label: 'I need help', class: 'need-help' },
+            { value: 'need-work', label: 'I need work', class: 'need-work' },
+            { value: 'can-do-more', label: 'I can do more', class: 'can-do-more' }
         ];
-        
-        let currentStatuses = {};
-        let updateInterval;
-        
-        // Initialize the application
-        function init() {
-            logDebug('Initializing application...');
-            createStatusCards();
-            loadStatuses();
-            // Update every 10 seconds
-            updateInterval = setInterval(loadStatuses, 10000);
-        }
-        
-        // Create status cards for each team member
-        function createStatusCards() {
-            const container = document.getElementById('statusContainer');
-            container.innerHTML = '';
-            container.className = 'status-grid';
-            
+
+        // In-memory data store (simulating server)
+        let teamData = {};
+
+        // Initialize team data
+        function initializeTeamData() {
             teamMembers.forEach(name => {
-                const card = document.createElement('div');
-                card.className = 'person-card';
-                
-                const nameDiv = document.createElement('div');
-                nameDiv.className = 'person-name';
-                nameDiv.textContent = name;
-                
-                const select = document.createElement('select');
-                select.className = 'status-dropdown';
-                select.id = `status-${name.replace(/\s+/g, '-')}`;
-                
-                statusOptions.forEach(option => {
-                    const optionElement = document.createElement('option');
-                    optionElement.value = option.value;
-                    optionElement.textContent = option.text;
-                    select.appendChild(optionElement);
-                });
-                
-                select.addEventListener('change', (e) => {
-                    updateStatus(name, e.target.value);
-                });
-                
-                card.appendChild(nameDiv);
-                card.appendChild(select);
-                container.appendChild(card);
+                teamData[name] = {
+                    status: 'good',
+                    lastUpdated: new Date().toLocaleString()
+                };
             });
         }
-        
-        // Load current statuses from Google Sheet
-async function loadStatuses() {
-  try {
-    const url = `${SCRIPT_URL}?action=getStatuses&cacheBuster=${Date.now()}`;
-    const response = await fetch(url, {
-      method: 'GET',
-      mode: 'cors',
-      cache: 'no-cache'
-    });
-    
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    
-    const data = await response.json();
-    // Rest of your code...
-  } catch (error) {
-    console.error('Error:', error);
-    showError(`Failed to load: ${error.message}`);
-  }
-}
-        
-        // Update display with current statuses
-        function updateDisplay() {
-            teamMembers.forEach(name => {
-                const select = document.getElementById(`status-${name.replace(/\s+/g, '-')}`);
-                if (select) {
-                    const status = currentStatuses[name] || '';
-                    select.value = status;
-                    updateSelectStyle(select, status);
-                }
+
+        // Create member card HTML
+        function createMemberCard(name) {
+            const member = teamData[name];
+            const statusClass = member.status;
+            
+            return `
+                <div class="member-card ${statusClass}" data-name="${name}">
+                    <div class="member-name">${name}</div>
+                    <select class="status-selector ${statusClass}" data-name="${name}">
+                        ${statusOptions.map(option => `
+                            <option value="${option.value}" ${member.status === option.value ? 'selected' : ''}>
+                                ${option.label}
+                            </option>
+                        `).join('')}
+                    </select>
+                    <div class="last-updated">Last updated: ${member.lastUpdated}</div>
+                </div>
+            `;
+        }
+
+        // Render all team members
+        function renderTeamMembers() {
+            const teamGrid = document.getElementById('teamGrid');
+            teamGrid.innerHTML = teamMembers.map(name => createMemberCard(name)).join('');
+            
+            // Add event listeners to dropdowns
+            const selectors = document.querySelectorAll('.status-selector');
+            selectors.forEach(selector => {
+                selector.addEventListener('change', handleStatusChange);
             });
         }
-        
-        // Update select element styling based on status
-        function updateSelectStyle(select, status) {
-            // Remove all status classes
-            select.classList.remove('status-need-help', 'status-good', 'status-need-work', 'status-can-do-more');
+
+        // Handle status change
+        function handleStatusChange(event) {
+            const name = event.target.dataset.name;
+            const newStatus = event.target.value;
             
-            // Add appropriate class based on status
-            const statusOption = statusOptions.find(opt => opt.value === status);
-            if (statusOption && statusOption.class) {
-                select.classList.add(statusOption.class);
-            }
-        }
-        
-        // Update status for a specific person
-        async function updateStatus(name, status) {
-            try {
-                logDebug(`Updating status for ${name}: ${status}`);
-                
-                const url = `${SCRIPT_URL}?action=updateStatus&name=${encodeURIComponent(name)}&status=${encodeURIComponent(status)}&cacheBuster=${Date.now()}`;
-                
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    mode: 'cors',
-                    cache: 'no-cache'
-                });
-                
-                logDebug(`Response status: ${response.status}`);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                logDebug('Parsed response:', data);
-                
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-                
-                if (data.success) {
-                    // Update local status and display
-                    currentStatuses[name] = status;
-                    const select = document.getElementById(`status-${name.replace(/\s+/g, '-')}`);
-                    updateSelectStyle(select, status);
-                    updateLastUpdatedTime();
-                    logDebug('Status updated successfully!');
-                } else {
-                    throw new Error('Unexpected response format');
-                }
-                
-            } catch (error) {
-                console.error('Error updating status:', error);
-                showError(`Failed to update status: ${error.message}`);
-                // Revert the select to previous value
-                loadStatuses();
-            }
-        }
-        
-        // Show error message
-        function showError(message) {
-            const container = document.getElementById('statusContainer');
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'error';
-            errorDiv.textContent = message;
-            container.parentNode.insertBefore(errorDiv, container);
+            // Update local data
+            teamData[name] = {
+                status: newStatus,
+                lastUpdated: new Date().toLocaleString()
+            };
             
-            // Remove error after 5 seconds
+            // Show updating indicator
+            const card = document.querySelector(`[data-name="${name}"]`);
+            card.classList.add('updating');
+            
+            // Sync to Google Sheets
+            syncToGoogleSheets(name, newStatus).then(() => {
+                card.classList.remove('updating');
+                // Re-render to update colors and timestamp
+                renderTeamMembers();
+                updateSyncStatus(USE_GOOGLE_SHEETS ? 'Synced to Google Sheets!' : 'Updated locally (demo mode)');
+                updateConnectionStatus(true);
+            }).catch((error) => {
+                card.classList.remove('updating');
+                updateSyncStatus(USE_GOOGLE_SHEETS ? 'Sync failed!' : 'Updated locally (demo mode)');
+                updateConnectionStatus(false);
+            });
+        }
+
+        // Simulate Google Sheets sync (demo mode)
+        function syncToGoogleSheets(name, status) {
+            return new Promise((resolve, reject) => {
+                // Simulate API call delay
+                setTimeout(() => {
+                    console.log(`Syncing ${name}: ${status} to Google Sheets`);
+                    // In real implementation, this would make an API call
+                    resolve();
+                }, 1000);
+            });
+        }
+
+        // Update sync status message
+        function updateSyncStatus(message) {
+            const syncStatus = document.getElementById('syncStatus');
+            syncStatus.textContent = message;
+            
             setTimeout(() => {
-                errorDiv.remove();
+                syncStatus.textContent = 'Ready to sync with Google Sheets';
+            }, 3000);
+        }
+
+        // Periodic data refresh from Google Sheets
+        function startDataRefresh() {
+            if (USE_GOOGLE_SHEETS) {
+                // Fetch data every 10 seconds when using Google Sheets
+                setInterval(() => {
+                    fetchCurrentData();
+                }, 10000);
+                
+                // Initial fetch
+                fetchCurrentData();
+            } else {
+                // Simulate remote updates in demo mode
+                simulateRemoteUpdates();
+            }
+        }
+
+        // Simulate periodic updates from other users (demo mode only)
+        function simulateRemoteUpdates() {
+            setInterval(() => {
+                // Randomly update a team member's status (simulating other users)
+                if (Math.random() < 0.1) { // 10% chance every 5 seconds
+                    const randomMember = teamMembers[Math.floor(Math.random() * teamMembers.length)];
+                    const randomStatus = statusOptions[Math.floor(Math.random() * statusOptions.length)];
+                    
+                    teamData[randomMember] = {
+                        status: randomStatus.value,
+                        lastUpdated: new Date().toLocaleString()
+                    };
+                    
+                    renderTeamMembers();
+                    updateSyncStatus(`${randomMember} updated their status (simulated)`);
+                }
             }, 5000);
         }
+
+        // Initialize the application
+        function init() {
+            initializeTeamData();
+            renderTeamMembers();
+            updateConnectionStatus(USE_GOOGLE_SHEETS);
+            startDataRefresh();
+        }
+
+        // Start the application
+        init();
+
+        // Google Apps Script integration
+        // REPLACE THIS URL with your actual Google Apps Script web app URL
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx27HRLuPKkmUe9L-CiijrJ7tCuDTNMnZ1tk08hXgpowqdQ00_9w5iDLpnqgq0Lvr5f/exec';
         
-        // Update last updated time
-        function updateLastUpdatedTime() {
-            const lastUpdated = document.getElementById('lastUpdated');
-            lastUpdated.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+        // Set to true when you have the Google Apps Script URL
+        const USE_GOOGLE_SHEETS = false; // Change to true when ready
+        
+        // Real sync function for Google Sheets
+        async function syncToGoogleSheets(name, status) {
+            if (!USE_GOOGLE_SHEETS) {
+                // Simulate sync for demo
+                return new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'updateStatus',
+                        name: name,
+                        status: status,
+                        timestamp: new Date().toISOString()
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Sync failed');
+                }
+                
+                const result = await response.json();
+                if (!result.success) {
+                    throw new Error(result.error || 'Sync failed');
+                }
+                
+                return result;
+            } catch (error) {
+                console.error('Error syncing to Google Sheets:', error);
+                throw error;
+            }
         }
         
-        // Log debug information
-        function logDebug(message, data) {
-            const debugDiv = document.getElementById('debugInfo');
-            const entry = document.createElement('div');
-            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-            debugDiv.insertBefore(entry, debugDiv.firstChild);
+        // Fetch current data from Google Sheets
+        async function fetchCurrentData() {
+            if (!USE_GOOGLE_SHEETS) {
+                return; // Skip in demo mode
+            }
             
-            if (data) {
-                console.log(message, data);
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL + '?action=getData');
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch data');
+                }
+                
+                const result = await response.json();
+                if (result.success && result.data) {
+                    teamData = result.data;
+                    renderTeamMembers();
+                    updateConnectionStatus(true);
+                } else {
+                    throw new Error(result.error || 'Failed to fetch data');
+                }
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                updateConnectionStatus(false);
+            }
+        }
+        
+        // Update connection status indicator
+        function updateConnectionStatus(connected) {
+            const indicator = document.getElementById('connectionIndicator');
+            if (USE_GOOGLE_SHEETS) {
+                if (connected) {
+                    indicator.textContent = '● Connected to Google Sheets';
+                    indicator.className = 'connection-indicator connected';
+                } else {
+                    indicator.textContent = '● Connection Error';
+                    indicator.className = 'connection-indicator disconnected';
+                }
             } else {
-                console.log(message);
-            }
-            
-            // Limit to 10 debug entries
-            if (debugDiv.children.length > 10) {
-                debugDiv.removeChild(debugDiv.lastChild);
+                indicator.textContent = '● Demo Mode';
+                indicator.className = 'connection-indicator disconnected';
             }
         }
-        
-        // Initialize when page loads
-        document.addEventListener('DOMContentLoaded', init);
-        
-        // Clean up interval when page unloads
-        window.addEventListener('beforeunload', () => {
-            if (updateInterval) {
-                clearInterval(updateInterval);
-            }
-        });
     </script>
 </body>
 </html>
