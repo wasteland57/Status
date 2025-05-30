@@ -154,12 +154,12 @@
 
     <script>
         // IMPORTANT: Replace with your Deployed Google Apps Script Web App URL
-        const SCRIPT_URL = 'YOUR_APPS_SCRIPT_WEB_APP_URL_GOES_HERE';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz0NzEuhmX2db2OlZ2d8GhR9iKoHX-3MoVegIHLwcYwbWKYzWrPPDWushzhSDnu0so-/exec';
 
         const initialNames = [
             "Brendan Varga", "Doug Kennedy", "Gerrit Cramer", "Isaac Miller", "John Stebelton",
             "Joe Beattie", "Kayla Plancon", "Kyle Buchner", "Kyle Miller", "Melanie Sobas",
-            "Paul Bater", "Renee Kehren", "Rob Mooney", "Scott Sieg", "Will Houser"
+            "Paul Bater", "Renee Kehren", "Rob Mooney", "Scott Sieg", "Steve Will Houser"
         ];
 
         const statusOptions = {
@@ -271,7 +271,7 @@
 
         // Function to handle status change
         async function handleStatusChange(name, newStatus, selectElement) {
-            if (SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbz0NzEuhmX2db2OlZ2d8GhR9iKoHX-3MoVegIHLwcYwbWKYzWrPPDWushzhSDnu0so-/exec') {
+            if (SCRIPT_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL_GOES_HERE') {
                 showToast("Error: Apps Script URL is not configured.", 5000);
                 // Revert selection if URL is not set
                 fetchStatuses(); // This will re-render with previous values from sheet or defaults
