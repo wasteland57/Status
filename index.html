@@ -4,507 +4,390 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Team Status Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Tailwind gray-100 */
+            color: #1f2937; /* Tailwind gray-800 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             min-height: 100vh;
+            margin: 0;
             padding: 20px;
         }
-
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-        }
-
-        .sync-status {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 25px;
-            padding: 8px 16px;
-            display: inline-block;
-            margin-top: 10px;
-            font-size: 0.9em;
-        }
-
-        .team-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            padding: 30px;
-        }
-
-        .member-card {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-            border-left: 5px solid #e0e0e0;
-        }
-
-        .member-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
-        }
-
-        .member-card.need-help {
-            border-left-color: #e74c3c;
-            background: linear-gradient(135deg, #fff 0%, #ffebee 100%);
-        }
-
-        .member-card.good {
-            border-left-color: #27ae60;
-            background: linear-gradient(135deg, #fff 0%, #e8f5e8 100%);
-        }
-
-        .member-card.need-work {
-            border-left-color: #f39c12;
-            background: linear-gradient(135deg, #fff 0%, #fff3e0 100%);
-        }
-
-        .member-card.can-do-more {
-            border-left-color: #3498db;
-            background: linear-gradient(135deg, #fff 0%, #e3f2fd 100%);
-        }
-
-        .member-name {
-            font-size: 1.2em;
-            font-weight: 600;
-            margin-bottom: 15px;
-            color: #2c3e50;
-        }
-
-        .status-selector {
+            background-color: white;
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 1em;
-            background: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
+            max-width: 800px;
         }
-
-        .status-selector:focus {
+        h1 {
+            font-size: 2em;
+            font-weight: 600;
+            color: #374151; /* Tailwind gray-700 */
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px 15px;
+            border: 1px solid #e5e7eb; /* Tailwind gray-200 */
+            text-align: left;
+        }
+        th {
+            background-color: #f9fafb; /* Tailwind gray-50 */
+            font-weight: 500;
+        }
+        select {
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: 1px solid #d1d5db; /* Tailwind gray-300 */
+            min-width: 150px;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        select:focus {
             outline: none;
-            border-color: #4facfe;
-            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.2);
+            border-color: #2563eb; /* Tailwind blue-600 */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3); /* Tailwind blue-500 with opacity */
         }
-
-        .status-selector.need-help {
-            border-color: #e74c3c;
-            color: #e74c3c;
-            font-weight: 600;
+        .status-select {
+            font-weight: 500;
         }
-
-        .status-selector.good {
-            border-color: #27ae60;
-            color: #27ae60;
-            font-weight: 600;
-        }
-
-        .status-selector.need-work {
-            border-color: #f39c12;
-            color: #f39c12;
-            font-weight: 600;
-        }
-
-        .status-selector.can-do-more {
-            border-color: #3498db;
-            color: #3498db;
-            font-weight: 600;
-        }
+        .status-I-need-help { background-color: #fee2e2; color: #991b1b; /* Red */ }
+        .status-I-need-work { background-color: #ffedd5; color: #9a3412; /* Orange */ }
+        .status-Im-good { background-color: #dcfce7; color: #166534; /* Green */ }
+        .status-I-can-do-more { background-color: #dbeafe; color: #1e40af; /* Blue */ }
 
         .last-updated {
-            font-size: 0.8em;
-            color: #7f8c8d;
-            margin-top: 10px;
-            font-style: italic;
+            font-size: 0.85em;
+            color: #6b7280; /* Tailwind gray-500 */
         }
-
-        .legend {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 20px;
+        .loading-message, .error-message {
+            text-align: center;
             padding: 20px;
-            background: #f8f9fa;
+            font-size: 1.1em;
+            border-radius: 8px;
+            margin-top: 20px;
         }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
-            border-radius: 20px;
-            background: white;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        .loading-message {
+            background-color: #e0f2fe; /* Tailwind sky-100 */
+            color: #0369a1; /* Tailwind sky-700 */
         }
-
-        .legend-color {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
+        .error-message {
+            background-color: #fee2e2; /* Tailwind red-100 */
+            color: #b91c1c; /* Tailwind red-700 */
         }
-
-        .legend-color.need-help { background-color: #e74c3c; }
-        .legend-color.good { background-color: #27ae60; }
-        .legend-color.need-work { background-color: #f39c12; }
-        .legend-color.can-do-more { background-color: #3498db; }
-
-        .connection-indicator {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 8px 16px;
-            border-radius: 20px;
+        .sync-button-container {
+            text-align: center;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+        .sync-button {
+            background-color: #10b981; /* Tailwind emerald-500 */
             color: white;
-            font-size: 0.9em;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .sync-button:hover {
+            background-color: #059669; /* Tailwind emerald-600 */
+        }
+        .sync-button:disabled {
+            background-color: #9ca3af; /* Tailwind gray-400 */
+            cursor: not-allowed;
+        }
+        .toast-message {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out, bottom 0.5s ease-in-out;
         }
-
-        .connection-indicator.connected {
-            background: #27ae60;
-        }
-
-        .connection-indicator.disconnected {
-            background: #e74c3c;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.6; }
-            100% { opacity: 1; }
-        }
-
-        .updating {
-            animation: pulse 1s infinite;
-        }
-
-        @media (max-width: 768px) {
-            .team-grid {
-                grid-template-columns: 1fr;
-                padding: 15px;
-            }
-            
-            .header h1 {
-                font-size: 2em;
-            }
-            
-            .legend {
-                flex-direction: column;
-                align-items: center;
-            }
+        .toast-message.show {
+            opacity: 1;
+            bottom: 30px;
         }
     </style>
 </head>
 <body>
-    <div class="connection-indicator" id="connectionIndicator">● Simulated Mode</div>
-    
     <div class="container">
-        <div class="header">
-            <h1>Team Status Tracker</h1>
-            <div class="sync-status">
-                <span id="syncStatus">Ready to sync with Google Sheets</span>
-            </div>
+        <h1>Team Status Tracker</h1>
+
+        <div id="messageArea"></div>
+        <div id="toastArea"></div>
+
+        <div class="sync-button-container">
+            <button id="syncButton" class="sync-button" onclick="fetchStatuses(true)">Sync with Google Sheet</button>
         </div>
 
-        <div class="legend">
-            <div class="legend-item">
-                <div class="legend-color need-help"></div>
-                <span>I need help</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color good"></div>
-                <span>I'm good</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color need-work"></div>
-                <span>I need work</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color can-do-more"></div>
-                <span>I can do more</span>
-            </div>
-        </div>
-
-        <div class="team-grid" id="teamGrid">
-            <!-- Team members will be populated here -->
-        </div>
+        <table id="statusTable">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Status</th>
+                    <th>Last Updated (Sheet)</th>
+                </tr>
+            </thead>
+            <tbody>
+                </tbody>
+        </table>
     </div>
 
     <script>
-        // Google Apps Script configuration - MUST BE AT THE TOP
-        // REPLACE THIS URL with your actual Google Apps Script web app URL
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyKqAmsoMpW_6PVKbXmk45ngmCo72gw8QSidUpSlnueSEoKlddaJXCbTiaRFWkz3g60/exec';
-        
-        // Set to true when you have the Google Apps Script URL
-        const USE_GOOGLE_SHEETS = true; // Change to true when ready
+        // IMPORTANT: Replace with your Deployed Google Apps Script Web App URL
+        const SCRIPT_URL = 'YOUR_APPS_SCRIPT_WEB_APP_URL_GOES_HERE';
 
-        // Team members data
-        const teamMembers = [
-            'Brendan Varga', 'Doug Kennedy', 'Gerrit Cramer', 'Isaac Miller',
-            'John Stebelton', 'Joe Beattie', 'Kayla Plancon', 'Kyle Buchner',
-            'Kyle Miller', 'Melanie Sobas', 'Paul Bater', 'Renee Kehren',
-            'Rob Mooney', 'Scott Sieg', 'Steve Will Houser'
+        const initialNames = [
+            "Brendan Varga", "Doug Kennedy", "Gerrit Cramer", "Isaac Miller", "John Stebelton",
+            "Joe Beattie", "Kayla Plancon", "Kyle Buchner", "Kyle Miller", "Melanie Sobas",
+            "Paul Bater", "Renee Kehren", "Rob Mooney", "Scott Sieg", "Will Houser"
         ];
 
-        // Status options
-        const statusOptions = [
-            { value: 'good', label: "I'm good", class: 'good' },
-            { value: 'need-help', label: 'I need help', class: 'need-help' },
-            { value: 'need-work', label: 'I need work', class: 'need-work' },
-            { value: 'can-do-more', label: 'I can do more', class: 'can-do-more' }
-        ];
+        const statusOptions = {
+            "I need help": { colorClass: "status-I-need-help", sheetValue: "I need help" },
+            "I need work": { colorClass: "status-I-need-work", sheetValue: "I need work" },
+            "I'm good": { colorClass: "status-Im-good", sheetValue: "I'm good" },
+            "I can do more": { colorClass: "status-I-can-do-more", sheetValue: "I can do more" }
+        };
+        const defaultStatus = "I'm good";
 
-        // In-memory data store (simulating server)
-        let teamData = {};
+        const tableBody = document.getElementById('statusTable').getElementsByTagName('tbody')[0];
+        const messageArea = document.getElementById('messageArea');
+        const toastArea = document.getElementById('toastArea');
+        const syncButton = document.getElementById('syncButton');
+        let isFetching = false;
 
-        // Initialize team data
-        function initializeTeamData() {
-            teamMembers.forEach(name => {
-                teamData[name] = {
-                    status: 'good',
-                    lastUpdated: new Date().toLocaleString()
-                };
-            });
-        }
+        // Function to show toast messages
+        function showToast(message, duration = 3000) {
+            const toast = document.createElement('div');
+            toast.className = 'toast-message';
+            toast.textContent = message;
+            toastArea.appendChild(toast);
 
-        // Create member card HTML
-        function createMemberCard(name) {
-            const member = teamData[name];
-            const statusClass = member.status;
-            
-            return `
-                <div class="member-card ${statusClass}" data-name="${name}">
-                    <div class="member-name">${name}</div>
-                    <select class="status-selector ${statusClass}" data-name="${name}">
-                        ${statusOptions.map(option => `
-                            <option value="${option.value}" ${member.status === option.value ? 'selected' : ''}>
-                                ${option.label}
-                            </option>
-                        `).join('')}
-                    </select>
-                    <div class="last-updated">Last updated: ${member.lastUpdated}</div>
-                </div>
-            `;
-        }
+            // Trigger reflow to enable transition
+            toast.offsetHeight;
 
-        // Render all team members
-        function renderTeamMembers() {
-            const teamGrid = document.getElementById('teamGrid');
-            teamGrid.innerHTML = teamMembers.map(name => createMemberCard(name)).join('');
-            
-            // Add event listeners to dropdowns
-            const selectors = document.querySelectorAll('.status-selector');
-            selectors.forEach(selector => {
-                selector.addEventListener('change', handleStatusChange);
-            });
-        }
+            toast.classList.add('show');
 
-        // Handle status change
-        function handleStatusChange(event) {
-            const name = event.target.dataset.name;
-            const newStatus = event.target.value;
-            
-            // Update local data
-            teamData[name] = {
-                status: newStatus,
-                lastUpdated: new Date().toLocaleString()
-            };
-            
-            // Show updating indicator
-            const card = document.querySelector(`[data-name="${name}"]`);
-            card.classList.add('updating');
-            
-            // Sync to Google Sheets
-            syncToGoogleSheets(name, newStatus).then(() => {
-                card.classList.remove('updating');
-                // Re-render to update colors and timestamp
-                renderTeamMembers();
-                updateSyncStatus(USE_GOOGLE_SHEETS ? 'Synced to Google Sheets!' : 'Updated locally (demo mode)');
-                updateConnectionStatus(true);
-            }).catch((error) => {
-                card.classList.remove('updating');
-                updateSyncStatus(USE_GOOGLE_SHEETS ? 'Sync failed!' : 'Updated locally (demo mode)');
-                updateConnectionStatus(false);
-            });
-        }
-
-        // Simulate Google Sheets sync (demo mode)
-        function syncToGoogleSheets(name, status) {
-            return new Promise((resolve, reject) => {
-                // Simulate API call delay
-                setTimeout(() => {
-                    console.log(`Syncing ${name}: ${status} to Google Sheets`);
-                    // In real implementation, this would make an API call
-                    resolve();
-                }, 1000);
-            });
-        }
-
-        // Update sync status message
-        function updateSyncStatus(message) {
-            const syncStatus = document.getElementById('syncStatus');
-            syncStatus.textContent = message;
-            
             setTimeout(() => {
-                syncStatus.textContent = 'Ready to sync with Google Sheets';
-            }, 3000);
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                       toast.parentNode.removeChild(toast);
+                    }
+                }, 500); // Wait for fade out transition
+            }, duration);
         }
 
-        // Periodic data refresh from Google Sheets
-        function startDataRefresh() {
-            if (USE_GOOGLE_SHEETS) {
-                // Fetch data every 10 seconds when using Google Sheets
-                setInterval(() => {
-                    fetchCurrentData();
-                }, 10000);
-                
-                // Initial fetch
-                fetchCurrentData();
-            } else {
-                // Simulate remote updates in demo mode
-                simulateRemoteUpdates();
+
+        // Function to apply color class to select element
+        function applySelectColor(selectElement, statusValue) {
+            // Remove existing status color classes
+            Object.values(statusOptions).forEach(opt => {
+                selectElement.classList.remove(opt.colorClass);
+            });
+            // Add new status color class
+            if (statusOptions[statusValue]) {
+                selectElement.classList.add(statusOptions[statusValue].colorClass);
+            } else if (statusOptions[defaultStatus]) { // Fallback to default if status is unknown
+                 selectElement.classList.add(statusOptions[defaultStatus].colorClass);
             }
         }
 
-        // Simulate periodic updates from other users (demo mode only)
-        function simulateRemoteUpdates() {
-            setInterval(() => {
-                // Randomly update a team member's status (simulating other users)
-                if (Math.random() < 0.1) { // 10% chance every 5 seconds
-                    const randomMember = teamMembers[Math.floor(Math.random() * teamMembers.length)];
-                    const randomStatus = statusOptions[Math.floor(Math.random() * statusOptions.length)];
-                    
-                    teamData[randomMember] = {
-                        status: randomStatus.value,
-                        lastUpdated: new Date().toLocaleString()
-                    };
-                    
-                    renderTeamMembers();
-                    updateSyncStatus(`${randomMember} updated their status (simulated)`);
-                }
-            }, 5000);
-        }
+        // Function to render the table
+        function renderTable(data) {
+            tableBody.innerHTML = ''; // Clear existing rows
 
-        // Initialize the application
-        function init() {
-            initializeTeamData();
-            renderTeamMembers();
-            updateConnectionStatus(USE_GOOGLE_SHEETS);
-            startDataRefresh();
-        }
-
-        // Start the application
-        init();
-
-        // Google Apps Script integration functions
-        // Real sync function for Google Sheets
-        async function syncToGoogleSheets(name, status) {
-            if (!USE_GOOGLE_SHEETS) {
-                // Simulate sync for demo
-                return new Promise(resolve => setTimeout(resolve, 1000));
-            }
-            
-            try {
-                const response = await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        action: 'updateStatus',
-                        name: name,
-                        status: status,
-                        timestamp: new Date().toISOString()
-                    })
+            // Create a map of statuses from fetched data for quick lookup
+            const statusDataMap = new Map();
+            if (Array.isArray(data)) {
+                data.forEach(item => {
+                    if(item && item.name) { // Ensure item and item.name are defined
+                        statusDataMap.set(item.name.trim(), { status: item.status, lastUpdated: item.lastUpdated });
+                    }
                 });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const result = await response.json();
-                if (!result.success) {
-                    throw new Error(result.error || 'Sync failed');
-                }
-                
-                console.log('Sync successful:', result);
-                return result;
-            } catch (error) {
-                console.error('Error syncing to Google Sheets:', error);
-                throw error;
             }
+
+
+            initialNames.forEach(name => {
+                const row = tableBody.insertRow();
+                const nameCell = row.insertCell();
+                const statusCell = row.insertCell();
+                const lastUpdatedCell = row.insertCell();
+
+                nameCell.textContent = name;
+
+                const select = document.createElement('select');
+                select.classList.add('status-select');
+                select.dataset.name = name;
+
+                Object.keys(statusOptions).forEach(optionText => {
+                    const option = document.createElement('option');
+                    option.value = optionText;
+                    option.textContent = optionText;
+                    select.appendChild(option);
+                });
+
+                const currentData = statusDataMap.get(name);
+                let currentStatus = defaultStatus;
+                let lastUpdatedText = "N/A";
+
+                if (currentData) {
+                    currentStatus = currentData.status || defaultStatus;
+                    lastUpdatedText = currentData.lastUpdated || "N/A";
+                }
+
+                select.value = currentStatus;
+                applySelectColor(select, currentStatus); // Apply initial color
+
+                select.addEventListener('change', (event) => {
+                    handleStatusChange(name, event.target.value, event.target);
+                });
+
+                statusCell.appendChild(select);
+                lastUpdatedCell.textContent = lastUpdatedText;
+                lastUpdatedCell.classList.add('last-updated');
+            });
         }
-        
-        // Fetch current data from Google Sheets
-        async function fetchCurrentData() {
-            if (!USE_GOOGLE_SHEETS) {
-                return; // Skip in demo mode
+
+        // Function to handle status change
+        async function handleStatusChange(name, newStatus, selectElement) {
+            if (SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbz0NzEuhmX2db2OlZ2d8GhR9iKoHX-3MoVegIHLwcYwbWKYzWrPPDWushzhSDnu0so-/exec') {
+                showToast("Error: Apps Script URL is not configured.", 5000);
+                // Revert selection if URL is not set
+                fetchStatuses(); // This will re-render with previous values from sheet or defaults
+                return;
             }
-            
+
+            applySelectColor(selectElement, newStatus); // Optimistically update color
+            showToast(`Updating ${name} to "${newStatus}"...`);
+            syncButton.disabled = true;
+
             try {
-                const response = await fetch(GOOGLE_SCRIPT_URL + '?action=getData');
-                
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'cors', // Required for cross-origin requests to Apps Script
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded', // Apps Script doPost often expects this
+                    },
+                    body: new URLSearchParams({ name: name, status: newStatus })
+                });
+
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    // Try to get error message from Apps Script response
+                    let errorText = `HTTP error! Status: ${response.status}`;
+                    try {
+                        const errorResult = await response.json();
+                        if (errorResult && errorResult.error) {
+                            errorText = `Error from script: ${errorResult.error}`;
+                        }
+                    } catch (e) { /* Ignore if response is not JSON */ }
+                    throw new Error(errorText);
                 }
-                
+
                 const result = await response.json();
-                if (result.success && result.data) {
-                    teamData = result.data;
-                    renderTeamMembers();
-                    updateConnectionStatus(true);
-                    console.log('Data fetched successfully');
+
+                if (result.success) {
+                    showToast(`${name}'s status updated successfully!`);
+                    // Update the "Last Updated" cell for this row
+                    const row = Array.from(tableBody.rows).find(r => r.cells[0].textContent === name);
+                    if (row && result.lastUpdated) {
+                        row.cells[2].textContent = result.lastUpdated;
+                    }
                 } else {
-                    throw new Error(result.error || 'Failed to fetch data');
+                    throw new Error(result.error || 'Unknown error from script.');
                 }
             } catch (error) {
-                console.error('Error fetching data:', error);
-                updateConnectionStatus(false);
+                console.error('Error updating status:', error);
+                showToast(`Error updating status for ${name}: ${error.message}`, 5000);
+                // Optionally, revert the dropdown to its previous state by re-fetching all statuses
+                fetchStatuses();
+            } finally {
+                syncButton.disabled = false;
             }
         }
-        
-        // Update connection status indicator
-        function updateConnectionStatus(connected) {
-            const indicator = document.getElementById('connectionIndicator');
-            if (USE_GOOGLE_SHEETS) {
-                if (connected) {
-                    indicator.textContent = '● Connected to Google Sheets';
-                    indicator.className = 'connection-indicator connected';
-                } else {
-                    indicator.textContent = '● Connection Error';
-                    indicator.className = 'connection-indicator disconnected';
+
+        // Function to fetch current statuses
+        async function fetchStatuses(isManualSync = false) {
+            if (SCRIPT_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL_GOES_HERE') {
+                messageArea.innerHTML = `<div class="error-message"><strong>Configuration Incomplete:</strong> Please replace 'YOUR_APPS_SCRIPT_WEB_APP_URL_GOES_HERE' in the HTML with your deployed Google Apps Script web app URL.</div>`;
+                renderTable([]); // Render empty table or with defaults if URL is not set
+                return;
+            }
+            if (isFetching) return;
+
+            isFetching = true;
+            syncButton.disabled = true;
+            if (isManualSync) {
+                showToast('Syncing with Google Sheet...');
+            }
+            messageArea.innerHTML = `<div class="loading-message">Loading statuses...</div>`;
+
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=getStatuses`, { mode: 'cors' });
+                if (!response.ok) {
+                     // Try to get error message from Apps Script response
+                    let errorText = `HTTP error! Status: ${response.status}`;
+                    try {
+                        const errorResult = await response.json();
+                        if (errorResult && errorResult.error) {
+                            errorText = `Error from script: ${errorResult.error}`;
+                        }
+                    } catch (e) { /* Ignore if response is not JSON */ }
+                    throw new Error(errorText);
                 }
-            } else {
-                indicator.textContent = '● Demo Mode';
-                indicator.className = 'connection-indicator disconnected';
+                const data = await response.json();
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                renderTable(data.statuses);
+                messageArea.innerHTML = ''; // Clear loading message
+                if (isManualSync) {
+                     showToast('Statuses synced successfully!');
+                }
+            } catch (error) {
+                console.error('Error fetching statuses:', error);
+                messageArea.innerHTML = `<div class="error-message"><strong>Error fetching statuses:</strong> ${error.message}. Check console for details. Ensure the Apps Script is deployed correctly and permissions are set.</div>`;
+                renderTable([]); // Render an empty table or with defaults on error
+            } finally {
+                isFetching = false;
+                syncButton.disabled = false;
             }
         }
+
+        // Initial load
+        fetchStatuses();
+
+        // Periodically refresh statuses (e.g., every 30 seconds)
+        setInterval(fetchStatuses, 30000);
+
+        // Warn user if they try to leave page with unconfigured script URL
+        window.addEventListener('beforeunload', function (e) {
+            if (SCRIPT_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL_GOES_HERE') {
+                const confirmationMessage = 'The Apps Script URL is not configured. Status changes will not be saved. Are you sure you want to leave?';
+                (e || window.event).returnValue = confirmationMessage; // Gecko + IE
+                return confirmationMessage; // Webkit, Safari, Chrome
+            }
+        });
     </script>
 </body>
 </html>
