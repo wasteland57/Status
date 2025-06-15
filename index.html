@@ -1,393 +1,95 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Team Status Tracker</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6; /* Tailwind gray-100 */
-            color: #1f2937; /* Tailwind gray-800 */
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            background-color: white;
-            padding: 20px 30px;
-            border-radius: 12px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            width: 100%;
-            max-width: 800px;
-        }
-        h1 {
-            font-size: 2em;
-            font-weight: 600;
-            color: #374151; /* Tailwind gray-700 */
-            text-align: center;
-            margin-bottom: 25px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            padding: 12px 15px;
-            border: 1px solid #e5e7eb; /* Tailwind gray-200 */
-            text-align: left;
-        }
-        th {
-            background-color: #f9fafb; /* Tailwind gray-50 */
-            font-weight: 500;
-        }
-        select {
-            padding: 8px 10px;
-            border-radius: 6px;
-            border: 1px solid #d1d5db; /* Tailwind gray-300 */
-            min-width: 150px;
-            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-        }
-        select:focus {
-            outline: none;
-            border-color: #2563eb; /* Tailwind blue-600 */
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3); /* Tailwind blue-500 with opacity */
-        }
-        .status-select {
-            font-weight: 500;
-        }
-        .status-I-need-help { background-color: #fee2e2; color: #991b1b; /* Red */ }
-        .status-I-need-work { background-color: #ffedd5; color: #9a3412; /* Orange */ }
-        .status-Im-good { background-color: #dcfce7; color: #166534; /* Green */ }
-        .status-I-can-do-more { background-color: #dbeafe; color: #1e40af; /* Blue */ }
-
-        .last-updated {
-            font-size: 0.85em;
-            color: #6b7280; /* Tailwind gray-500 */
-        }
-        .loading-message, .error-message {
-            text-align: center;
-            padding: 20px;
-            font-size: 1.1em;
-            border-radius: 8px;
-            margin-top: 20px;
-        }
-        .loading-message {
-            background-color: #e0f2fe; /* Tailwind sky-100 */
-            color: #0369a1; /* Tailwind sky-700 */
-        }
-        .error-message {
-            background-color: #fee2e2; /* Tailwind red-100 */
-            color: #b91c1c; /* Tailwind red-700 */
-        }
-        .sync-button-container {
-            text-align: center;
-            margin-top: 25px;
-            margin-bottom: 15px;
-        }
-        .sync-button {
-            background-color: #10b981; /* Tailwind emerald-500 */
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1em;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.2s ease-in-out;
-        }
-        .sync-button:hover {
-            background-color: #059669; /* Tailwind emerald-600 */
-        }
-        .sync-button:disabled {
-            background-color: #9ca3af; /* Tailwind gray-400 */
-            cursor: not-allowed;
-        }
-        .toast-message {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #333;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 6px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            z-index: 1000;
-            opacity: 0;
-            transition: opacity 0.5s ease-in-out, bottom 0.5s ease-in-out;
-        }
-        .toast-message.show {
-            opacity: 1;
-            bottom: 30px;
-        }
-    </style>
+  <title>Status Board</title>
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 80%;
+      margin: 20px auto;
+    }
+    th, td {
+      padding: 8px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+    select {
+      width: 100%;
+    }
+    .red { background-color: #f8d7da; }
+    .green { background-color: #d4edda; }
+    .orange { background-color: #fff3cd; }
+    .blue { background-color: #cce5ff; }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Team Status Tracker</h1>
+  <h2 style="text-align:center;">Team Status Board</h2>
+  <table id="statusTable">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Status</th>
+        <th>Last Updated</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
-        <div id="messageArea"></div>
-        <div id="toastArea"></div>
+  <script>
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbz0lz_7vwlN2HyocZ20bpDmfeY79uzJhzk2ilh2HWo8r49ION5V7TOWTHM-tIA49Nl7/exec'; // Replace with your deployed Apps Script URL
+    const statusOptions = ["I need work", "I need help", "I'm good", "I can do more"];
+    const statusColors = {
+      "I need help": "red",
+      "I'm good": "green",
+      "I need work": "orange",
+      "I can do more": "blue"
+    };
 
-        <div class="sync-button-container">
-            <button id="syncButton" class="sync-button" onclick="fetchStatuses(true)">Sync with Google Sheet</button>
-        </div>
+    async function fetchData() {
+      const res = await fetch(scriptURL);
+      const data = await res.json();
+      const tbody = document.querySelector("#statusTable tbody");
+      tbody.innerHTML = '';
 
-        <table id="statusTable">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Status</th>
-                    <th>Last Updated (Sheet)</th>
-                </tr>
-            </thead>
-            <tbody>
-                </tbody>
-        </table>
-    </div>
+      data.forEach(row => {
+        const [name, status, updated] = row;
+        const tr = document.createElement("tr");
+        tr.className = statusColors[status] || "";
 
-    <script>
-        // IMPORTANT: Replace with your Deployed Google Apps Script Web App URL
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz0NzEuhmX2db2OlZ2d8GhR9iKoHX-3MoVegIHLwcYwbWKYzWrPPDWushzhSDnu0so-/exec';
+        const nameTd = document.createElement("td");
+        nameTd.textContent = name;
 
-        const initialNames = [
-            "Brendan Varga", "Doug Kennedy", "Gerrit Cramer", "Isaac Miller", "John Stebelton",
-            "Joe Beattie", "Kayla Plancon", "Kyle Buchner", "Kyle Miller", "Melanie Sobas",
-            "Paul Bater", "Renee Kehren", "Rob Mooney", "Scott Sieg", "Steve Will Houser"
-        ];
-
-        const statusOptions = {
-            "I need help": { colorClass: "status-I-need-help", sheetValue: "I need help" },
-            "I need work": { colorClass: "status-I-need-work", sheetValue: "I need work" },
-            "I'm good": { colorClass: "status-Im-good", sheetValue: "I'm good" },
-            "I can do more": { colorClass: "status-I-can-do-more", sheetValue: "I can do more" }
-        };
-        const defaultStatus = "I'm good";
-
-        const tableBody = document.getElementById('statusTable').getElementsByTagName('tbody')[0];
-        const messageArea = document.getElementById('messageArea');
-        const toastArea = document.getElementById('toastArea');
-        const syncButton = document.getElementById('syncButton');
-        let isFetching = false;
-
-        // Function to show toast messages
-        function showToast(message, duration = 3000) {
-            const toast = document.createElement('div');
-            toast.className = 'toast-message';
-            toast.textContent = message;
-            toastArea.appendChild(toast);
-
-            // Trigger reflow to enable transition
-            toast.offsetHeight;
-
-            toast.classList.add('show');
-
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => {
-                    if (toast.parentNode) {
-                       toast.parentNode.removeChild(toast);
-                    }
-                }, 500); // Wait for fade out transition
-            }, duration);
-        }
-
-
-        // Function to apply color class to select element
-        function applySelectColor(selectElement, statusValue) {
-            // Remove existing status color classes
-            Object.values(statusOptions).forEach(opt => {
-                selectElement.classList.remove(opt.colorClass);
-            });
-            // Add new status color class
-            if (statusOptions[statusValue]) {
-                selectElement.classList.add(statusOptions[statusValue].colorClass);
-            } else if (statusOptions[defaultStatus]) { // Fallback to default if status is unknown
-                 selectElement.classList.add(statusOptions[defaultStatus].colorClass);
-            }
-        }
-
-        // Function to render the table
-        function renderTable(data) {
-            tableBody.innerHTML = ''; // Clear existing rows
-
-            // Create a map of statuses from fetched data for quick lookup
-            const statusDataMap = new Map();
-            if (Array.isArray(data)) {
-                data.forEach(item => {
-                    if(item && item.name) { // Ensure item and item.name are defined
-                        statusDataMap.set(item.name.trim(), { status: item.status, lastUpdated: item.lastUpdated });
-                    }
-                });
-            }
-
-
-            initialNames.forEach(name => {
-                const row = tableBody.insertRow();
-                const nameCell = row.insertCell();
-                const statusCell = row.insertCell();
-                const lastUpdatedCell = row.insertCell();
-
-                nameCell.textContent = name;
-
-                const select = document.createElement('select');
-                select.classList.add('status-select');
-                select.dataset.name = name;
-
-                Object.keys(statusOptions).forEach(optionText => {
-                    const option = document.createElement('option');
-                    option.value = optionText;
-                    option.textContent = optionText;
-                    select.appendChild(option);
-                });
-
-                const currentData = statusDataMap.get(name);
-                let currentStatus = defaultStatus;
-                let lastUpdatedText = "N/A";
-
-                if (currentData) {
-                    currentStatus = currentData.status || defaultStatus;
-                    lastUpdatedText = currentData.lastUpdated || "N/A";
-                }
-
-                select.value = currentStatus;
-                applySelectColor(select, currentStatus); // Apply initial color
-
-                select.addEventListener('change', (event) => {
-                    handleStatusChange(name, event.target.value, event.target);
-                });
-
-                statusCell.appendChild(select);
-                lastUpdatedCell.textContent = lastUpdatedText;
-                lastUpdatedCell.classList.add('last-updated');
-            });
-        }
-
-        // Function to handle status change
-        async function handleStatusChange(name, newStatus, selectElement) {
-            if (SCRIPT_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL_GOES_HERE') {
-                showToast("Error: Apps Script URL is not configured.", 5000);
-                // Revert selection if URL is not set
-                fetchStatuses(); // This will re-render with previous values from sheet or defaults
-                return;
-            }
-
-            applySelectColor(selectElement, newStatus); // Optimistically update color
-            showToast(`Updating ${name} to "${newStatus}"...`);
-            syncButton.disabled = true;
-
-            try {
-                const response = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'cors', // Required for cross-origin requests to Apps Script
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded', // Apps Script doPost often expects this
-                    },
-                    body: new URLSearchParams({ name: name, status: newStatus })
-                });
-
-                if (!response.ok) {
-                    // Try to get error message from Apps Script response
-                    let errorText = `HTTP error! Status: ${response.status}`;
-                    try {
-                        const errorResult = await response.json();
-                        if (errorResult && errorResult.error) {
-                            errorText = `Error from script: ${errorResult.error}`;
-                        }
-                    } catch (e) { /* Ignore if response is not JSON */ }
-                    throw new Error(errorText);
-                }
-
-                const result = await response.json();
-
-                if (result.success) {
-                    showToast(`${name}'s status updated successfully!`);
-                    // Update the "Last Updated" cell for this row
-                    const row = Array.from(tableBody.rows).find(r => r.cells[0].textContent === name);
-                    if (row && result.lastUpdated) {
-                        row.cells[2].textContent = result.lastUpdated;
-                    }
-                } else {
-                    throw new Error(result.error || 'Unknown error from script.');
-                }
-            } catch (error) {
-                console.error('Error updating status:', error);
-                showToast(`Error updating status for ${name}: ${error.message}`, 5000);
-                // Optionally, revert the dropdown to its previous state by re-fetching all statuses
-                fetchStatuses();
-            } finally {
-                syncButton.disabled = false;
-            }
-        }
-
-        // Function to fetch current statuses
-        async function fetchStatuses(isManualSync = false) {
-            if (SCRIPT_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL_GOES_HERE') {
-                messageArea.innerHTML = `<div class="error-message"><strong>Configuration Incomplete:</strong> Please replace 'YOUR_APPS_SCRIPT_WEB_APP_URL_GOES_HERE' in the HTML with your deployed Google Apps Script web app URL.</div>`;
-                renderTable([]); // Render empty table or with defaults if URL is not set
-                return;
-            }
-            if (isFetching) return;
-
-            isFetching = true;
-            syncButton.disabled = true;
-            if (isManualSync) {
-                showToast('Syncing with Google Sheet...');
-            }
-            messageArea.innerHTML = `<div class="loading-message">Loading statuses...</div>`;
-
-            try {
-                const response = await fetch(`${SCRIPT_URL}?action=getStatuses`, { mode: 'cors' });
-                if (!response.ok) {
-                     // Try to get error message from Apps Script response
-                    let errorText = `HTTP error! Status: ${response.status}`;
-                    try {
-                        const errorResult = await response.json();
-                        if (errorResult && errorResult.error) {
-                            errorText = `Error from script: ${errorResult.error}`;
-                        }
-                    } catch (e) { /* Ignore if response is not JSON */ }
-                    throw new Error(errorText);
-                }
-                const data = await response.json();
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-                renderTable(data.statuses);
-                messageArea.innerHTML = ''; // Clear loading message
-                if (isManualSync) {
-                     showToast('Statuses synced successfully!');
-                }
-            } catch (error) {
-                console.error('Error fetching statuses:', error);
-                messageArea.innerHTML = `<div class="error-message"><strong>Error fetching statuses:</strong> ${error.message}. Check console for details. Ensure the Apps Script is deployed correctly and permissions are set.</div>`;
-                renderTable([]); // Render an empty table or with defaults on error
-            } finally {
-                isFetching = false;
-                syncButton.disabled = false;
-            }
-        }
-
-        // Initial load
-        fetchStatuses();
-
-        // Periodically refresh statuses (e.g., every 30 seconds)
-        setInterval(fetchStatuses, 30000);
-
-        // Warn user if they try to leave page with unconfigured script URL
-        window.addEventListener('beforeunload', function (e) {
-            if (SCRIPT_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL_GOES_HERE') {
-                const confirmationMessage = 'The Apps Script URL is not configured. Status changes will not be saved. Are you sure you want to leave?';
-                (e || window.event).returnValue = confirmationMessage; // Gecko + IE
-                return confirmationMessage; // Webkit, Safari, Chrome
-            }
+        const statusTd = document.createElement("td");
+        const select = document.createElement("select");
+        statusOptions.forEach(opt => {
+          const option = document.createElement("option");
+          option.value = opt;
+          option.text = opt;
+          if (opt === status) option.selected = true;
+          select.appendChild(option);
         });
-    </script>
+        select.onchange = async () => {
+          await fetch(scriptURL, {
+            method: "POST",
+            body: JSON.stringify({ name, status: select.value }),
+            headers: { 'Content-Type': 'application/json' }
+          });
+          fetchData(); // Refresh after update
+        };
+        statusTd.appendChild(select);
+
+        const updatedTd = document.createElement("td");
+        updatedTd.textContent = updated;
+
+        tr.appendChild(nameTd);
+        tr.appendChild(statusTd);
+        tr.appendChild(updatedTd);
+        tbody.appendChild(tr);
+      });
+    }
+
+    setInterval(fetchData, 10000); // Refresh every 10s
+    fetchData();
+  </script>
 </body>
 </html>
