@@ -69,11 +69,14 @@
           select.appendChild(option);
         });
         select.onchange = async () => {
-          await fetch(scriptURL, {
-            method: "POST",
-            body: JSON.stringify({ name, status: select.value }),
-            headers: { 'Content-Type': 'application/json' }
-          });
+  await fetch(scriptURL, {
+    method: "POST",
+    body: JSON.stringify({ name, status: select.value }),
+    headers: { 'Content-Type': 'application/json' }
+  });
+
+  setTimeout(fetchData, 500); // short delay before refreshing table
+};
           fetchData(); // Refresh after update
         };
         statusTd.appendChild(select);
