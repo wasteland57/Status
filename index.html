@@ -1,102 +1,601 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Status Board</title>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
+    :root {
+      --primary-bg: #1a1b1e;
+      --secondary-bg: #2c2d31;
+      --accent-color: #6366f1;
+      --text-primary: #ffffff;
+      --text-secondary: #a1a1aa;
+      --border-color: #3f3f46;
+      --success: #22c55e;
+      --warning: #eab308;
+      --danger: #ef4444;
+      --gray: #6b7280;
+      --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--primary-bg);
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    .dashboard-title {
+      font-size: 1.875rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .filter-section {
+      background-color: var(--secondary-bg);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: var(--shadow);
+    }
+
+    .filter-row {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      min-width: 200px;
+    }
+
+    .filter-label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .filter-select {
+      background-color: var(--primary-bg);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.875rem;
+    }
+
+    .filter-select:focus {
+      outline: none;
+      border-color: var(--accent-color);
+    }
+
+    .filter-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: end;
+    }
+
+    .results-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding: 0 0.5rem;
+    }
+
+    .results-count {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    .table-container {
+      background-color: var(--secondary-bg);
+      border-radius: 0.75rem;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .table-responsive {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
     table {
-      border-collapse: collapse;
-      width: 80%;
-      margin: 20px auto;
-    }
-    th, td {
-      padding: 8px;
-      border: 1px solid #ccc;
-      text-align: left;
-    }
-    select {
       width: 100%;
+      border-collapse: collapse;
+      min-width: 800px;
     }
-    .red { background-color: #f8d7da; }
-    .green { background-color: #d4edda; }
-    .orange { background-color: #fff3cd; }
-    .blue { background-color: #cce5ff; }
-  </style>
-</head>
-<body>
-  <h2 style="text-align:center;">Team Status Board</h2>
-  <table id="statusTable">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Status</th>
-        <th>Last Updated</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
 
-  <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbyNvElP_oOj9Ru91QYzhPjP86jcDNUHoVkEh2UQHJOh_heoLqbu2Li8_tyGsQ46CSqR/exec'; // Replace with your deployed Apps Script URL
-    const statusOptions = ["I need work", "I need help", "I'm good", "I can do more"];
-    const statusColors = {
-      "I need help": "red",
-      "I'm good": "green",
-      "I need work": "orange",
-      "I can do more": "blue"
-    };
+    th, td {
+      padding: 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
 
-    async function fetchData() {
-      try {
-        const res = await fetch(scriptURL);
-        if (!res.ok) throw new Error('Network response was not ok');
-        const data = await res.json();
-        const tbody = document.querySelector("#statusTable tbody");
-        tbody.innerHTML = '';
+    th {
+      background-color: var(--secondary-bg);
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      font-size: 0.875rem;
+      letter-spacing: 0.05em;
+    }
 
-        data.forEach(row => {
-          const [name, status, updated] = row;
-          const tr = document.createElement("tr");
-          tr.className = statusColors[status] || "";
+    tr:last-child td {
+      border-bottom: none;
+    }
 
-          const nameTd = document.createElement("td");
-          nameTd.textContent = name;
+    tr:hover {
+      background-color: rgba(255, 255, 255, 0.03);
+    }
 
-          const statusTd = document.createElement("td");
-          const select = document.createElement("select");
-          statusOptions.forEach(opt => {
-            const option = document.createElement("option");
-            option.value = opt;
-            option.text = opt;
-            if (opt === status) option.selected = true;
-            select.appendChild(option);
-          });
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
 
-          select.onchange = async () => {
-            await fetch(scriptURL, {
-              method: "POST",
-              body: JSON.stringify({ name, status: select.value }),
-              headers: { 'Content-Type': 'application/json' }
-            });
-            setTimeout(fetchData, 500); // Refresh after update
-          };
+    .message-text {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      max-width: 200px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+    }
 
-          statusTd.appendChild(select);
+    .message-input {
+      width: 100%;
+      background-color: var(--secondary-bg);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 0.5rem;
+    }
 
-          const updatedTd = document.createElement("td");
-          updatedTd.textContent = updated;
+    .last-updated {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
 
-          tr.appendChild(nameTd);
-          tr.appendChild(statusTd);
-          tr.appendChild(updatedTd);
-          tbody.appendChild(tr);
-        });
-      } catch (error) {
-        console.error('Error fetching data:', error);
+    .loader {
+      display: none;
+      width: 48px;
+      height: 48px;
+      border: 3px solid var(--accent-color);
+      border-bottom-color: transparent;
+      border-radius: 50%;
+      margin: 2rem auto;
+      animation: rotation 1s linear infinite;
+    }
+
+    .loader.active {
+      display: block;
+    }
+
+    .edit-message-btn, .edit-status-btn {
+      cursor: pointer;
+      margin-left: 8px;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+
+    .edit-message-btn:hover, .edit-status-btn:hover {
+      opacity: 1;
+    }
+
+    .btn-clear {
+      background-color: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-clear:hover {
+      background-color: var(--border-color);
+      color: var(--text-primary);
+    }
+
+    @keyframes rotation {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 1rem;
+      }
+
+      .dashboard-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+      }
+
+      .filter-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .filter-group {
+        min-width: auto;
+      }
+
+      .table-responsive {
+        margin: 0 -1rem;
+        border-radius: 0;
+      }
+
+      .table-container {
+        border-radius: 0;
       }
     }
 
-    setInterval(fetchData, 10000); // Refresh every 10 seconds
-    fetchData();
+    .fas:hover {
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="dashboard-header">
+      <h1 class="dashboard-title">👥 User Status Dashboard</h1>
+      <div class="d-flex align-items-center gap-3">
+        <small class="text-secondary">Auto-refreshes every 30 seconds</small>
+        <button class="btn btn-outline-light btn-sm" onclick="loadData()" title="Refresh Now">
+          <i class="fas fa-sync-alt"></i> Refresh
+        </button>
+      </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="filter-section">
+      <div class="filter-row">
+        <div class="filter-group">
+          <label class="filter-label">Office</label>
+          <select class="filter-select" id="officeFilter">
+            <option value="">All Offices</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Department</label>
+          <select class="filter-select" id="departmentFilter">
+            <option value="">All Departments</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Status</label>
+          <select class="filter-select" id="statusFilter">
+            <option value="">All Statuses</option>
+          </select>
+        </div>
+        <div class="filter-actions">
+          <button class="btn-clear" onclick="clearFilters()">
+            <i class="fas fa-times"></i> Clear Filters
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results Info -->
+    <div class="results-info">
+      <div class="results-count" id="resultsCount">
+        Showing 0 employees
+      </div>
+    </div>
+
+    <div class="table-container">
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>User Name</th>
+              <th>Office</th>
+              <th>Department</th>
+              <th>Status</th>
+              <th>Message</th>
+              <th>Last Updated</th>
+            </tr>
+          </thead>
+          <tbody id="statusTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="loader" id="loader"></div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://kit.fontawesome.com/786d0bd98a.js" crossorigin="anonymous"></script>
+  <!-- bootstrap -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    var dropdown = [];
+    var allUsers = [];
+    var filteredUsers = [];
+    var refreshInterval;
+    var isEditing = false;
+
+    $(document).ready(function() {
+        loadData();
+        
+        // Auto-refresh every 30 seconds
+        refreshInterval = setInterval(function() {
+            if (!isEditing) {
+                loadData(true); // silent refresh
+            }
+        }, 30000);
+
+        // Filter event handlers
+        $('#officeFilter, #departmentFilter, #statusFilter').on('change', function() {
+            applyFilters();
+        });
+    });
+
+    function loadData(silent = false) {
+        const loader = document.getElementById('loader');
+        if (!silent) {
+            loader.classList.add('active');
+        }
+
+        $.get('https://script.google.com/macros/s/AKfycbzviBtX2Dec3mN9GmSleLYrsvWZaCtyiGhVGOoyjYYb3CXqWfp7IwbHX-yP1enBYvK9/exec', function(response) {
+            dropdown = response.dropdown;
+            allUsers = response.user;
+            
+            populateFilterOptions();
+            applyFilters();
+            
+            loader.classList.remove('active');
+        }).fail(function() {
+            if (!silent) {
+                console.log('Failed to load data');
+            }
+        });
+    }
+
+    function populateFilterOptions() {
+        const offices = [...new Set(allUsers.map(user => user[4]))].sort();
+        const departments = [...new Set(allUsers.map(user => user[5]))].sort();
+        const statuses = dropdown.map(d => d[0]);
+
+        // Populate office filter
+        const officeFilter = $('#officeFilter');
+        officeFilter.find('option:not(:first)').remove();
+        offices.forEach(office => {
+            officeFilter.append(`<option value="${office}">${office}</option>`);
+        });
+
+        // Populate department filter
+        const departmentFilter = $('#departmentFilter');
+        departmentFilter.find('option:not(:first)').remove();
+        departments.forEach(department => {
+            departmentFilter.append(`<option value="${department}">${department}</option>`);
+        });
+
+        // Populate status filter
+        const statusFilter = $('#statusFilter');
+        statusFilter.find('option:not(:first)').remove();
+        statuses.forEach(status => {
+            statusFilter.append(`<option value="${status}">${status}</option>`);
+        });
+    }
+
+    function applyFilters() {
+        const officeFilter = $('#officeFilter').val();
+        const departmentFilter = $('#departmentFilter').val();
+        const statusFilter = $('#statusFilter').val();
+
+        filteredUsers = allUsers.filter(user => {
+            const office = user[4];
+            const department = user[5];
+            const status = user[1];
+
+            return (!officeFilter || office === officeFilter) &&
+                   (!departmentFilter || department === departmentFilter) &&
+                   (!statusFilter || status === statusFilter);
+        });
+
+        renderTable();
+        updateResultsCount();
+    }
+
+    function renderTable() {
+        $('#statusTableBody').empty();
+        
+        for(var i = 0; i < filteredUsers.length; i++){
+            var user = filteredUsers[i];
+            var color = '', dropdown_option = '';
+            
+            for(var j = 0; j < dropdown.length; j++){
+                dropdown_option += `<option value="${dropdown[j][0]}" ${dropdown[j][0] == user[1] ? 'selected' : ''}>${dropdown[j][0]}</option>`;
+                if(dropdown[j][0] == user[1]) color = dropdown[j][1];
+            }
+
+            $('#statusTableBody').append(`
+                <tr data-user="${user[0]}">
+                    <td>${user[0]}</td>
+                    <td>${user[4]}</td>
+                    <td>${user[5]}</td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <span class="status-badge" style="background-color: ${color} !important; color: white !important;">${user[1]}</span>
+                            <i class="fas fa-pencil-alt edit-status-btn text-secondary ms-2"></i>
+                            <select class="form-control d-none ms-2" name="status" style="width: 120px;">
+                                <option value="" disabled>Select Status</option>
+                                ${dropdown_option}
+                            </select>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="message-text">${user[3] || '-'}</div>
+                            <i class="fas fa-pencil-alt edit-message-btn text-secondary ms-2"></i>
+                            <input type="text" class="message-input form-control d-none ms-2" name="message" 
+                                   placeholder="Add message" value="${user[3] || ''}" style="width: 180px;">
+                        </div>
+                    </td>
+                    <td class="last-updated">${user[2] || 'Never updated'}</td>
+                </tr>
+            `);
+        }
+    }
+
+    function updateResultsCount() {
+        const count = filteredUsers.length;
+        const total = allUsers.length;
+        const countText = count === total ? 
+            `Showing all ${total} employees` : 
+            `Showing ${count} of ${total} employees`;
+        $('#resultsCount').text(countText);
+    }
+
+    function clearFilters() {
+        $('#officeFilter').val('');
+        $('#departmentFilter').val('');
+        $('#statusFilter').val('');
+        applyFilters();
+    }
+
+    // Edit status handler
+    $(document).on('click', '.edit-status-btn', function() {
+        isEditing = true;
+        const container = $(this).closest('td');
+        container.find('.status-badge, .edit-status-btn').addClass('d-none');
+        container.find('select').removeClass('d-none').focus();
+    });
+
+    // Edit message handler
+    $(document).on('click', '.edit-message-btn, .message-text', function() {
+        isEditing = true;
+        const container = $(this).closest('td');
+        container.find('.message-text, .edit-message-btn').addClass('d-none');
+        container.find('.message-input').removeClass('d-none').focus();
+    });
+
+    // Save status when dropdown changes
+    $(document).on('change', 'select[name="status"]', function() {
+        const tr = $(this).closest('tr');
+        const user = tr.data('user');
+        const status = $(this).val();
+        const message = tr.find('.message-text').text();
+        
+        updateStatus(user, status, message);
+    });
+
+    // Save message when input loses focus or Enter is pressed
+    $(document).on('blur keypress', '.message-input', function(e) {
+        if(e.type === 'keypress' && e.which !== 13) return;
+        
+        const tr = $(this).closest('tr');
+        const user = tr.data('user');
+        const status = tr.find('.status-badge').text();
+        const message = $(this).val();
+        
+        updateStatus(user, status, message);
+    });
+
+    function updateStatus(user, status, message) {
+        const date = new Date().toLocaleString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        const data = {
+            user: user,
+            status: status,
+            message: message,
+            date: date
+        };
+
+        $.post('https://script.google.com/macros/s/AKfycbzviBtX2Dec3mN9GmSleLYrsvWZaCtyiGhVGOoyjYYb3CXqWfp7IwbHX-yP1enBYvK9/exec', data, function(response) {
+            if(response.result === 'success') {
+                const tr = $(`tr[data-user="${user}"]`);
+                tr.find('.status-badge').text(status);
+                tr.find('.message-text').text(message || '-');
+                tr.find('.last-updated').text(date);
+                
+                // Update status color
+                for(var i = 0; i < dropdown.length; i++) {
+                    if(dropdown[i][0] === status) {
+                        tr.find('.status-badge').css('background-color', dropdown[i][1]);
+                        break;
+                    }
+                }
+                
+                // Update the data in memory
+                for(var i = 0; i < allUsers.length; i++) {
+                    if(allUsers[i][0] === user) {
+                        allUsers[i][1] = status;
+                        allUsers[i][3] = message;
+                        allUsers[i][2] = date;
+                        break;
+                    }
+                }
+                
+                // Reset UI
+                tr.find('.status-badge, .edit-status-btn').removeClass('d-none');
+                tr.find('select').addClass('d-none');
+                tr.find('.message-text, .edit-message-btn').removeClass('d-none');
+                tr.find('.message-input').addClass('d-none');
+                
+                isEditing = false;
+
+                Swal.fire({
+                    title: 'Updated!',
+                    text: 'User status updated successfully',
+                    icon: 'success',
+                    confirmButtonText: 'OK',
+                    timer: 1500
+                });
+            } else {
+                isEditing = false;
+                Swal.fire({
+                    title: 'Error!',
+                    text: response.error || 'Failed to update status',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            }
+        });
+    }
   </script>
 </body>
 </html>
