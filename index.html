@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Admin Dashboard</title>
+  <title>Production Staff Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -273,7 +273,7 @@
 <body>
   <div class="container">
     <div class="dashboard-header">
-      <h1 class="dashboard-title">👥 User Status Dashboard</h1>
+      <h1 class="dashboard-title">👥 Production Staff Dashboard</h1>
       <div class="d-flex align-items-center gap-3">
         <small class="text-secondary">Auto-refreshes every 30 seconds</small>
         <button class="btn btn-outline-light btn-sm" onclick="loadData()" title="Refresh Now">
@@ -298,7 +298,7 @@
           </select>
         </div>
         <div class="filter-group">
-          <label class="filter-label">Status</label>
+          <label class="filter-label">Status Filter</label>
           <select class="filter-select" id="statusFilter">
             <option value="">All Statuses</option>
           </select>
@@ -324,8 +324,6 @@
           <thead>
             <tr>
               <th>User Name</th>
-              <th>Office</th>
-              <th>Department</th>
               <th>Status</th>
               <th>Message</th>
               <th>Last Updated</th>
@@ -449,8 +447,6 @@
             $('#statusTableBody').append(`
                 <tr data-user="${user[0]}">
                     <td>${user[0]}</td>
-                    <td>${user[4]}</td>
-                    <td>${user[5]}</td>
                     <td>
                         <div class="d-flex align-items-center">
                             <span class="status-badge" style="background-color: ${color} !important; color: white !important;">${user[1]}</span>
@@ -531,8 +527,8 @@
 
     function updateStatus(user, status, message) {
         const date = new Date().toLocaleString('en-US', { 
-            year: 'numeric', 
-            month: 'long', 
+            year: '2-digit', 
+            month: 'numeric', 
             day: 'numeric',
             hour: '2-digit',
             minute: '2-digit'
@@ -577,6 +573,11 @@
                 tr.find('.message-input').addClass('d-none');
                 
                 isEditing = false;
+
+                // Refresh data immediately to show updates from other users
+                setTimeout(function() {
+                    loadData(true);
+                }, 1000);
 
                 Swal.fire({
                     title: 'Updated!',
