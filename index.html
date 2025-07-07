@@ -371,11 +371,22 @@
             loader.classList.add('active');
         }
 
+        // Save current filter values
+        const currentOfficeFilter = $('#officeFilter').val();
+        const currentDepartmentFilter = $('#departmentFilter').val();
+        const currentStatusFilter = $('#statusFilter').val();
+
         $.get('https://script.google.com/macros/s/AKfycbzviBtX2Dec3mN9GmSleLYrsvWZaCtyiGhVGOoyjYYb3CXqWfp7IwbHX-yP1enBYvK9/exec', function(response) {
             dropdown = response.dropdown;
             allUsers = response.user;
             
             populateFilterOptions();
+            
+            // Restore filter values
+            $('#officeFilter').val(currentOfficeFilter);
+            $('#departmentFilter').val(currentDepartmentFilter);
+            $('#statusFilter').val(currentStatusFilter);
+            
             applyFilters();
             
             loader.classList.remove('active');
